@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { encryptMessage } from "../utils/encryptionUtils";
 
 const AddMachinetypeModal: React.FC<{
   onClose: () => void;
@@ -10,6 +11,9 @@ const AddMachinetypeModal: React.FC<{
     description: "",
     active: "Y", // Default value to "Y"
   });
+
+  const [originalJSON, setOriginalJSON] = useState<string | null>(null);
+  const [encryptedJSON, setEncryptedJSON] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -22,8 +26,44 @@ const AddMachinetypeModal: React.FC<{
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Format data
+    const message = JSON.stringify(
+      {
+        datacore: "MACHINE",
+        folder: "MACHINETYPE",
+        command: "INSERT",
+        group: "XCYTUA",
+        property: "PJLBBS",
+        record: {
+          objecttype: formData.objecttype,
+          description: formData.description,
+          active: formData.active,
+        },
+      },
+      null,
+      2
+    ); // Pretty print the JSON with indentation
+
+    // Set original JSON to state
+    setOriginalJSON(message);
+
+    // Encrypt the message
+    const encryptedMessage = encryptMessage(message);
+
+    // Set encrypted JSON to state
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date().toISOString(),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
+    setEncryptedJSON(JSON.stringify(payload, null, 2));
+
     try {
-      await axios.post("/api/machinetype", formData);
+      await axios.post("/api/machinetype", payload);
       alert("Machinetype added successfully!");
       onAdd(); // Fetch and update the machinetypes list
       onClose(); // Close the modal after add
@@ -34,7 +74,7 @@ const AddMachinetypeModal: React.FC<{
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">Add Machinetype</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -98,6 +138,28 @@ const AddMachinetypeModal: React.FC<{
             Cancel
           </button>
         </form>
+        {originalJSON && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2">Original JSON</h3>
+            <pre
+              className="bg-gray-100 p-4 rounded-md overflow-y-auto"
+              style={{ maxHeight: "200px" }}
+            >
+              {originalJSON}
+            </pre>
+          </div>
+        )}
+        {encryptedJSON && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2">Encrypted JSON</h3>
+            <pre
+              className="bg-gray-100 p-4 rounded-md overflow-y-auto"
+              style={{ maxHeight: "200px" }}
+            >
+              {encryptedJSON}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,10 +1,18 @@
 import pool from "../database/db.js";
+import { decryptMessage } from "../utils/encryptionUtils.js";
 
 // Create a new machinetype
 export const createMachinetype = async (req, res) => {
-  const { objecttype, description, active } = req.body;
+  const { message } = req.body;
 
   try {
+    // Dekripsi pesan
+    const decryptedMessage = decryptMessage(message);
+
+    // Parse JSON dari pesan yang telah didekripsi
+    const { objecttype, description, active } =
+      JSON.parse(decryptedMessage).record;
+
     // Check if the objecttype already exists
     const checkQuery =
       "SELECT * FROM machine.machinetype WHERE objecttype = $1";
