@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { encryptMessage } from "../utils/encryptionUtils"; // Menggunakan enkripsi yang sama
 
 interface EditMachineProfileModalProps {
   machineProfile: MachineProfile;
@@ -49,6 +50,9 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
   const [objectcodes, setObjectcodes] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [objectname, setObjectname] = useState(machineProfile.objectname);
+
+  const [originalJson, setOriginalJson] = useState<string | null>(null);
+  const [encryptedMessage, setEncryptedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setFormData({ ...machineProfile });
@@ -118,18 +122,52 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async () => {
-    try {
-      const formattedDOB = formData.dob ? formatDate(formData.dob) : "";
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-      await axios.put(`/api/machineprofile/${machineProfile.id}`, {
-        ...formData,
-        dob: formattedDOB,
-      });
-      onUpdate();
-      onClose();
-    } catch (err) {
-      console.error("Error updating machine profile:", err);
+    // Format JSON data yang akan dienkripsi
+    const jsonData = {
+      datacore: "MACHINE",
+      folder: "MACHINEPROFILE",
+      command: "UPDATE",
+      record: { ...formData },
+      condition: { id: machineProfile.id },
+    };
+
+    // Pretty print JSON
+    const jsonString = JSON.stringify(jsonData, null, 2);
+
+    // Encrypt JSON data
+    const encryptedMessage = encryptMessage(jsonString);
+
+    // Payload yang akan dikirimkan ke backend
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date()
+        .toISOString()
+        .replace(/[-:.TZ]/g, "")
+        .slice(0, 14),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
+    setOriginalJson(jsonString); // JSON asli sebelum enkripsi
+    setEncryptedMessage(JSON.stringify(payload, null, 2)); // Pretty printed encrypted payload
+
+    try {
+      // PUT request ke backend
+      const response = await axios.put(
+        `/api/machineprofile/${machineProfile.id}`,
+        payload
+      );
+      console.log("Response from backend:", response.data);
+
+      alert("Machine profile updated successfully!");
+      onUpdate(); // Update list machine profiles
+      onClose(); // Close modal setelah update
+    } catch (error) {
+      console.error("Error updating machine profile:", error);
     }
   };
 

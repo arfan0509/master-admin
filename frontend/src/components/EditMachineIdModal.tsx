@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { encryptMessage } from "../utils/encryptionUtils"; // Menggunakan enkripsi yang sama
 
 interface EditMachineIdModalProps {
   machineId: any;
@@ -30,6 +31,8 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
   const [machinetypes, setMachinetypes] = useState<any[]>([]);
   const [machinegroups, setMachinegroups] = useState<any[]>([]);
   const [filteredMachinegroups, setFilteredMachinegroups] = useState<any[]>([]);
+  const [originalJson, setOriginalJson] = useState<string | null>(null);
+  const [encryptedMessage, setEncryptedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,11 +77,52 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Format JSON data yang akan dienkripsi
+    const jsonData = {
+      datacore: "MACHINE",
+      folder: "MACHINEID",
+      command: "UPDATE",
+      group: "XCYTUA",
+      property: "PJLBBS",
+      record: formData,
+      condition: {
+        id: formData.id,
+      },
+    };
+
+    // Pretty print JSON
+    const jsonString = JSON.stringify(jsonData, null, 2);
+
+    // Encrypt JSON data
+    const encryptedMessage = encryptMessage(jsonString);
+
+    // Payload yang akan dikirimkan ke backend
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date()
+        .toISOString()
+        .replace(/[-:.TZ]/g, "")
+        .slice(0, 14),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
+    setOriginalJson(jsonString); // JSON asli sebelum enkripsi
+    setEncryptedMessage(JSON.stringify(payload, null, 2)); // Pretty printed encrypted payload
+
     try {
-      await axios.put(`/api/machineid/${formData.id}`, formData);
+      // PUT request ke backend
+      const response = await axios.put(
+        `/api/machineid/${formData.id}`,
+        payload
+      );
+      console.log("Response from backend:", response.data);
+
       alert("Machine ID updated successfully!");
-      onUpdate();
-      onClose();
+      onUpdate(); // Update list machine ID
+      onClose(); // Close modal setelah update
     } catch (error) {
       console.error("Error updating machine ID:", error);
     }
@@ -212,6 +256,24 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
             Cancel
           </button>
         </form>
+
+        {originalJson && (
+          <div className="mt-6">
+            <h3 className="text-lg font-bold">Original JSON</h3>
+            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+              {originalJson}
+            </pre>
+          </div>
+        )}
+
+        {encryptedMessage && (
+          <div className="mt-6">
+            <h3 className="text-lg font-bold">Encrypted Message</h3>
+            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+              {encryptedMessage}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
   );

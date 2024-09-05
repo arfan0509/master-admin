@@ -1,4 +1,5 @@
 import pool from "../database/db.js";
+import { decryptMessage, encryptMessage } from "../utils/encryptionUtils.js";
 
 // Fungsi untuk membuat profil mesin
 export const createMachineProfile = async (req, res) => {
@@ -145,36 +146,44 @@ export const getMachineProfileById = async (req, res) => {
   }
 };
 
-// Fungsi untuk memperbarui profil mesin
+// Update an existing machine profile
 export const updateMachineProfile = async (req, res) => {
-  const { id } = req.params;
-  const {
-    objecttype_id,
-    objectgroup_id,
-    objectid_id,
-    objectcode_id,
-    objectstatus,
-    objectname,
-    description,
-    registereddate,
-    registeredno,
-    registeredby,
-    countryoforigin,
-    dob,
-    sex,
-    documentno,
-    vendor_id, // Ubah kolom 'vendor' menjadi 'vendor_id'
-    notes,
-    photogalery_1,
-    photogalery_2,
-    photogalery_3,
-    photogalery_4,
-    photogalery_5,
-    video,
-    active,
-  } = req.body;
+  const { message } = req.body;
 
   try {
+    // Dekripsi pesan yang diterima dari frontend
+    const decryptedMessage = decryptMessage(message);
+
+    // Ambil record dan condition dari pesan yang didekripsi
+    const { record, condition } = JSON.parse(decryptedMessage);
+    const {
+      objecttype_id,
+      objectgroup_id,
+      objectid_id,
+      objectcode_id,
+      objectstatus,
+      objectname,
+      description,
+      registereddate,
+      registeredno,
+      registeredby,
+      countryoforigin,
+      dob,
+      sex,
+      documentno,
+      vendor_id,
+      notes,
+      photogalery_1,
+      photogalery_2,
+      photogalery_3,
+      photogalery_4,
+      photogalery_5,
+      video,
+      active,
+    } = record;
+    const { id } = condition; // Mengambil ID dari condition
+
+    // Update data ke database berdasarkan ID
     const updateQuery = `
       UPDATE machine.machineprofile SET
         objecttype_id = $1, objectgroup_id = $2, objectid_id = $3, objectcode_id = $4,
@@ -200,7 +209,7 @@ export const updateMachineProfile = async (req, res) => {
       dob,
       sex,
       documentno,
-      vendor_id, // Ubah kolom 'vendor' menjadi 'vendor_id'
+      vendor_id,
       notes,
       photogalery_1,
       photogalery_2,
@@ -216,11 +225,30 @@ export const updateMachineProfile = async (req, res) => {
       return res.status(404).json({ error: "Machine profile not found" });
     }
 
-    res.json(result.rows[0]);
+    const updatedData = result.rows[0];
+
+    // Hapus ID dari data yang akan dikirim ke frontend
+    const { id: removedId, ...dataWithoutId } = updatedData;
+
+    // Enkripsi data yang berhasil di-update tanpa ID
+    const encryptedMessage = encryptMessage(
+      JSON.stringify(dataWithoutId, null, 2)
+    );
+
+    // Response format
+    const response = {
+      uniqueid: process.env.IV, // Sesuaikan dengan uniqueid
+      timestamp: new Date()
+        .toISOString()
+        .replace(/[-:.TZ]/g, "")
+        .slice(0, 14),
+      code: "200",
+      message: encryptedMessage,
+    };
+
+    res.json(response);
   } catch (err) {
-    console.error("Database error:", err.message);
-    res
-      .status(500)
-      .json({ error: "An error occurred while updating the machine profile" });
+    console.error("Error updating machine profile:", err);
+    res.status(500).json({ error: "Failed to update machine profile" });
   }
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { encryptMessage } from "../utils/encryptionUtils"; // Menggunakan enkripsi yang sama
 
 interface EditMachineDetailModalProps {
   machineDetail: {
@@ -28,6 +29,8 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
   const [filteredMachineGroups, setFilteredMachineGroups] = useState<any[]>([]);
   const [machineIds, setMachineIds] = useState<any[]>([]);
   const [filteredMachineIds, setFilteredMachineIds] = useState<any[]>([]);
+  const [originalJson, setOriginalJson] = useState<string | null>(null);
+  const [encryptedMessage, setEncryptedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,11 +87,61 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Format JSON data yang akan dienkripsi
+    const jsonData = {
+      datacore: "MACHINE",
+      folder: "MACHINEDETAIL",
+      command: "UPDATE",
+      group: "XCYTUA",
+      property: "PJLBBS",
+      record: {
+        objecttype_id: formData.objecttype_id,
+        objectgroup_id: formData.objectgroup_id,
+        objectid_id: formData.objectid_id,
+        objectcode: formData.objectcode,
+        objectname: formData.objectname,
+        lat: formData.lat,
+        long: formData.long,
+        active: formData.active,
+      },
+      condition: {
+        id: machineDetail.id,
+      },
+    };
+
+    // Pretty print JSON
+    const jsonString = JSON.stringify(jsonData, null, 2);
+
+    // Encrypt JSON data
+    const encryptedMessage = encryptMessage(jsonString);
+
+    // Payload yang akan dikirimkan ke backend
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date()
+        .toISOString()
+        .replace(/[-:.TZ]/g, "")
+        .slice(0, 14),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
+    setOriginalJson(jsonString); // JSON asli sebelum enkripsi
+    setEncryptedMessage(JSON.stringify(payload, null, 2)); // Pretty printed encrypted payload
+
     try {
-      await axios.put(`/api/machinedetail/${machineDetail.id}`, formData);
+      // PUT request ke backend
+      const response = await axios.put(
+        `/api/machinedetail/${machineDetail.id}`,
+        payload
+      );
+      console.log("Response from backend:", response.data);
+
       alert("Machine detail updated successfully!");
-      onUpdate();
-      onClose();
+      onUpdate(); // Update list machine details
+      onClose(); // Close modal setelah update
     } catch (error) {
       console.error("Error updating machine detail:", error);
     }
@@ -103,6 +156,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
       <div className="bg-white w-full max-w-2xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Edit Machine Detail</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Form Fields */}
           <div>
             <label className="block">Object Type</label>
             <select
@@ -227,22 +281,34 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
               </label>
             </div>
           </div>
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end space-x-2">
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              className="px-4 py-2 bg-gray-300 rounded-md"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md"
             >
-              Save
+              Save Changes
             </button>
           </div>
         </form>
+        {originalJson && (
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold">Original JSON Data:</h3>
+            <pre className="bg-gray-100 p-2 rounded">{originalJson}</pre>
+          </div>
+        )}
+        {encryptedMessage && (
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold">Encrypted Payload:</h3>
+            <pre className="bg-gray-100 p-2 rounded">{encryptedMessage}</pre>
+          </div>
+        )}
       </div>
     </div>
   );
