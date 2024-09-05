@@ -87,23 +87,27 @@ export const getMachinetypes = async (req, res) => {
   }
 };
 
-// Update an existing machinetype
+// Update a machinetype
+// Update a machinetype
 export const updateMachinetype = async (req, res) => {
-  const { id } = req.params;
-  const { objecttype, description, active } = req.body;
+  const { message } = req.body;
 
   try {
-    // Check if the machinetype exists
-    const checkQuery = "SELECT * FROM machine.machinetype WHERE id = $1";
-    const checkResult = await pool.query(checkQuery, [id]);
+    // Dekripsi pesan yang diterima dari frontend
+    const decryptedMessage = decryptMessage(message);
 
-    if (checkResult.rows.length === 0) {
-      return res.status(404).json({ error: "Machinetype not found" });
-    }
+    // Ambil record dan condition dari pesan yang didekripsi
+    const { record, condition } = JSON.parse(decryptedMessage);
+    const { description, active } = record;
+    const { value: objecttype } = condition.objecttype; // Mengambil objecttype dari condition
 
-    // Update the machinetype
+    // Dapatkan ID dari URL (req.params.id)
+    const { id } = req.params;
+
+    // Update data ke database berdasarkan ID dan objecttype
     const updateQuery = `
-      UPDATE machine.machinetype SET objecttype = $1, description = $2, active = $3
+      UPDATE machine.machinetype
+      SET objecttype = $1, description = $2, active = $3
       WHERE id = $4 RETURNING *
     `;
     const result = await pool.query(updateQuery, [
@@ -113,11 +117,48 @@ export const updateMachinetype = async (req, res) => {
       id,
     ]);
 
-    res.json(result.rows[0]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Machinetype not found",
+      });
+    }
+
+    const updatedData = result.rows[0]; // Data yang berhasil di-update
+
+    // Membuat objek yang hanya menyertakan field yang di-update
+    const responseData = {
+      objecttype: updatedData.objecttype,
+      description: updatedData.description,
+      active: updatedData.active,
+    };
+
+    // Enkripsi data yang baru di-update ke database, dalam format JSON dengan indentation
+    const encryptedMessage = encryptMessage(
+      JSON.stringify(responseData, null, 2)
+    );
+
+    // Membuat uniqueid
+    const uniqueid = process.env.IV; // Sesuai dengan yang disimpan di .env atau kunci unik lainnya
+
+    // Mendapatkan timestamp dalam format YYYYMMDDHHMMSS
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:.TZ]/g, "")
+      .slice(0, 14);
+
+    // Format JSON response
+    const response = {
+      uniqueid: uniqueid,
+      timestamp: timestamp,
+      code: "200",
+      message: encryptedMessage,
+    };
+
+    res.status(200).json(response); // Mengirimkan respons
   } catch (err) {
     console.error(err.message);
-    res
-      .status(500)
-      .json({ error: "An error occurred while updating the machinetype" });
+    res.status(500).json({
+      error: "An error occurred while updating the machinetype",
+    });
   }
 };

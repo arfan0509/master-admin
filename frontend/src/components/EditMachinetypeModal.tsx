@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { encryptMessage } from "../utils/encryptionUtils";
 
 interface Machinetype {
   id: number;
@@ -25,6 +26,9 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
     active: machinetype.active,
   });
 
+  const [originalJson, setOriginalJson] = useState<string | null>(null);
+  const [encryptedMessage, setEncryptedMessage] = useState<string | null>(null);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -36,8 +40,56 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Format JSON data sesuai dengan format yang diharapkan backend
+    const jsonData = {
+      datacore: "MACHINE",
+      folder: "MACHINETYPE",
+      command: "UPDATE",
+      group: "XCYTUA",
+      property: "PJLBBS",
+      record: {
+        description: formData.description,
+        active: formData.active,
+      },
+      condition: {
+        objecttype: {
+          operator: "eq",
+          value: formData.objecttype,
+        },
+      },
+    };
+
+    // Convert JSON data to pretty-printed string
+    const jsonString = JSON.stringify(jsonData, null, 2); // Pretty print JSON with indentation
+
+    // Encrypt JSON data
+    const encryptedMessage = encryptMessage(jsonString);
+
+    // Prepare payload with pretty-printed JSON
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date()
+        .toISOString()
+        .replace(/[-:.TZ]/g, "")
+        .slice(0, 14),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
+    // Set state for original JSON and encrypted message (pretty-printed payload)
+    setOriginalJson(JSON.stringify(jsonData, null, 2)); // Pretty print original JSON
+    setEncryptedMessage(JSON.stringify(payload, null, 2)); // Pretty print the encrypted payload
+
     try {
-      await axios.put(`/api/machinetype/${machinetype.id}`, formData);
+      // Send PUT request with encrypted payload
+      const response = await axios.put(
+        `/api/machinetype/${machinetype.id}`, // PUT request
+        payload
+      );
+      console.log("Response from backend:", response.data);
+
       alert("Machinetype updated successfully!");
       onUpdate(); // Fetch and update the machinetypes list
       onClose(); // Close the modal after update
@@ -47,9 +99,9 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Update Machinetype</h2>
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
+        <h2 className="text-xl font-bold mb-4">Update Machinetype</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block">Object Type</label>
@@ -100,18 +152,36 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            className="px-4 py-2 bg-blue-500 text-white rounded-md"
           >
             Submit
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+            className="px-4 py-2 bg-gray-500 text-white rounded-md ml-2"
           >
             Cancel
           </button>
         </form>
+
+        {originalJson && (
+          <div className="mt-6">
+            <h3 className="text-lg font-bold">Original JSON</h3>
+            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+              {originalJson}
+            </pre>
+          </div>
+        )}
+
+        {encryptedMessage && (
+          <div className="mt-6">
+            <h3 className="text-lg font-bold">Encrypted Message</h3>
+            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+              {encryptedMessage}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
   );
