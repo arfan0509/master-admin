@@ -1,15 +1,13 @@
 import pool from "../database/db.js";
-import { decryptMessage } from "../utils/encryptionUtils.js";
+import { decryptMessage, encryptMessage } from "../utils/encryptionUtils.js";
 
 // Create a new machinetype
 export const createMachinetype = async (req, res) => {
   const { message } = req.body;
 
   try {
-    // Dekripsi pesan
+    // Dekripsi pesan yang diterima dari frontend
     const decryptedMessage = decryptMessage(message);
-
-    // Parse JSON dari pesan yang telah didekripsi
     const { objecttype, description, active } =
       JSON.parse(decryptedMessage).record;
 
@@ -25,7 +23,7 @@ export const createMachinetype = async (req, res) => {
       });
     }
 
-    // Insert the new machinetype
+    // Insert data ke database
     const insertQuery = `
       INSERT INTO machine.machinetype (objecttype, description, active)
       VALUES ($1, $2, $3) RETURNING *
@@ -36,7 +34,38 @@ export const createMachinetype = async (req, res) => {
       active,
     ]);
 
-    res.status(201).json(result.rows[0]);
+    const insertedData = result.rows[0]; // Data yang berhasil di-insert
+
+    // Membuat objek yang hanya menyertakan field selain 'id'
+    const responseData = {
+      objecttype: insertedData.objecttype,
+      description: insertedData.description,
+      active: insertedData.active,
+    };
+
+    // Enkripsi data yang baru dimasukkan ke database, dalam format JSON dengan indentation
+    const encryptedMessage = encryptMessage(
+      JSON.stringify(responseData, null, 2)
+    );
+
+    // Membuat uniqueid
+    const uniqueid = process.env.IV; // Sesuai dengan yang disimpan di .env atau kunci unik lainnya
+
+    // Mendapatkan timestamp dalam format YYYYMMDDHHMMSS
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:.TZ]/g, "")
+      .slice(0, 14);
+
+    // Format JSON response
+    const response = {
+      uniqueid: uniqueid,
+      timestamp: timestamp,
+      code: "200",
+      message: encryptedMessage,
+    };
+
+    res.status(201).json(response); // Mengirimkan respons
   } catch (err) {
     console.error(err.message);
     res
@@ -45,12 +74,10 @@ export const createMachinetype = async (req, res) => {
   }
 };
 
-// Get all machinetypes, ordered by id
+// Get all machinetypes
 export const getMachinetypes = async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM machine.machinetype ORDER BY id"
-    );
+    const result = await pool.query("SELECT * FROM machine.machinetype");
     res.json(result.rows);
   } catch (err) {
     console.error(err.message);

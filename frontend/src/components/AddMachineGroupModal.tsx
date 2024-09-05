@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { encryptMessage } from "../utils/encryptionUtils";
 
 interface AddMachineGroupModalProps {
   onClose: () => void;
@@ -45,11 +46,45 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Format data
+    const message = JSON.stringify(
+      {
+        datacore: "MACHINE",
+        folder: "MACHINEGROUP",
+        command: "INSERT",
+        group: "XCYTUA",
+        property: "PJLBBS",
+        record: {
+          objecttype_id: formData.objecttype_id,
+          objectgroup: formData.objectgroup,
+          description: formData.description,
+          active: formData.active,
+        },
+      },
+      null,
+      2
+    ); // Pretty print the JSON with indentation
+
+    // Encrypt the message
+    const encryptedMessage = encryptMessage(message);
+
+    // Prepare payload
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date().toISOString(),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
     try {
-      await axios.post("/api/machinegroup", formData);
+      const response = await axios.post("/api/machinegroup", payload);
+      console.log("Response from backend:", response.data); // Log the response from backend
+
       alert("Machine group created successfully!");
-      onUpdate();
-      onClose();
+      onUpdate(); // Fetch and update the machine groups list
+      onClose(); // Close the modal after add
     } catch (error) {
       console.error("Error creating machine group:", error);
     }
@@ -57,7 +92,7 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Add Machine Group</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

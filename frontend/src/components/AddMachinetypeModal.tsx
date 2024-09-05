@@ -1,19 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { encryptMessage } from "../utils/encryptionUtils";
 
-const AddMachinetypeModal: React.FC<{
+interface AddMachineTypeModalProps {
   onClose: () => void;
   onAdd: () => void;
-}> = ({ onClose, onAdd }) => {
+}
+
+const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
+  onClose,
+  onAdd,
+}) => {
   const [formData, setFormData] = useState({
     objecttype: "",
     description: "",
-    active: "Y", // Default value to "Y"
+    active: "", // Default value to "Y"
   });
 
-  const [originalJSON, setOriginalJSON] = useState<string | null>(null);
-  const [encryptedJSON, setEncryptedJSON] = useState<string | null>(null);
+  const [objectTypes, setObjectTypes] = useState<
+    { id: number; objecttype: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchObjectTypes = async () => {
+      try {
+        const response = await axios.get("/api/machinetype");
+        setObjectTypes(response.data);
+      } catch (error) {
+        console.error("Error fetching object types:", error);
+      }
+    };
+
+    fetchObjectTypes();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -45,13 +64,10 @@ const AddMachinetypeModal: React.FC<{
       2
     ); // Pretty print the JSON with indentation
 
-    // Set original JSON to state
-    setOriginalJSON(message);
-
     // Encrypt the message
     const encryptedMessage = encryptMessage(message);
 
-    // Set encrypted JSON to state
+    // Prepare payload
     const payload = {
       apikey: "06EAAA9D10BE3D4386D10144E267B681",
       uniqueid: "JFKlnUZyyu0MzRqj",
@@ -60,22 +76,22 @@ const AddMachinetypeModal: React.FC<{
       message: encryptedMessage,
     };
 
-    setEncryptedJSON(JSON.stringify(payload, null, 2));
-
     try {
-      await axios.post("/api/machinetype", payload);
-      alert("Machinetype added successfully!");
-      onAdd(); // Fetch and update the machinetypes list
+      const response = await axios.post("/api/machinetype", payload);
+      console.log("Response from backend:", response.data); // Log the response from backend
+
+      alert("Machine type created successfully!");
+      onAdd(); // Fetch and update the machine types list
       onClose(); // Close the modal after add
     } catch (error) {
-      console.error("Error adding machinetype:", error);
+      console.error("Error creating machine type:", error);
     }
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-semibold mb-4">Add Machinetype</h2>
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
+        <h2 className="text-xl font-bold mb-4">Add Machine Type</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block">Object Type</label>
@@ -126,43 +142,21 @@ const AddMachinetypeModal: React.FC<{
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            className="px-4 py-2 bg-blue-500 text-white rounded-md"
           >
             Submit
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+            className="px-4 py-2 bg-gray-500 text-white rounded-md ml-2"
           >
             Cancel
           </button>
         </form>
-        {originalJSON && (
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Original JSON</h3>
-            <pre
-              className="bg-gray-100 p-4 rounded-md overflow-y-auto"
-              style={{ maxHeight: "200px" }}
-            >
-              {originalJSON}
-            </pre>
-          </div>
-        )}
-        {encryptedJSON && (
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Encrypted JSON</h3>
-            <pre
-              className="bg-gray-100 p-4 rounded-md overflow-y-auto"
-              style={{ maxHeight: "200px" }}
-            >
-              {encryptedJSON}
-            </pre>
-          </div>
-        )}
       </div>
     </div>
   );
 };
 
-export default AddMachinetypeModal;
+export default AddMachineTypeModal;
