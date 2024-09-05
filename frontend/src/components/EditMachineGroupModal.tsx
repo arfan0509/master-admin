@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { encryptMessage } from "../utils/encryptionUtils"; // Menggunakan enkripsi yang sama
 
 interface MachineGroup {
   id: number;
@@ -31,6 +32,9 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
     { id: number; objecttype: string }[]
   >([]);
 
+  const [originalJson, setOriginalJson] = useState<string | null>(null);
+  const [encryptedMessage, setEncryptedMessage] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchObjectTypes = async () => {
       try {
@@ -55,11 +59,57 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Format JSON data yang akan dienkripsi
+    const jsonData = {
+      datacore: "MACHINE",
+      folder: "MACHINEGROUP",
+      command: "UPDATE",
+      group: "XCYTUA",
+      property: "PJLBBS",
+      record: {
+        objecttype_id: formData.objecttype_id,
+        objectgroup: formData.objectgroup,
+        description: formData.description,
+        active: formData.active,
+      },
+      condition: {
+        id: machineGroup.id,
+      },
+    };
+
+    // Pretty print JSON
+    const jsonString = JSON.stringify(jsonData, null, 2);
+
+    // Encrypt JSON data
+    const encryptedMessage = encryptMessage(jsonString);
+
+    // Payload yang akan dikirimkan ke backend
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date()
+        .toISOString()
+        .replace(/[-:.TZ]/g, "")
+        .slice(0, 14),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
+    setOriginalJson(jsonString); // JSON asli sebelum enkripsi
+    setEncryptedMessage(JSON.stringify(payload, null, 2)); // Pretty printed encrypted payload
+
     try {
-      await axios.put(`/api/machinegroup/${machineGroup.id}`, formData);
+      // PUT request ke backend
+      const response = await axios.put(
+        `/api/machinegroup/${machineGroup.id}`,
+        payload
+      );
+      console.log("Response from backend:", response.data);
+
       alert("Machine group updated successfully!");
-      onUpdate();
-      onClose();
+      onUpdate(); // Update list machine group
+      onClose(); // Close modal setelah update
     } catch (error) {
       console.error("Error updating machine group:", error);
     }
@@ -148,6 +198,24 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
             Cancel
           </button>
         </form>
+
+        {originalJson && (
+          <div className="mt-6">
+            <h3 className="text-lg font-bold">Original JSON</h3>
+            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+              {originalJson}
+            </pre>
+          </div>
+        )}
+
+        {encryptedMessage && (
+          <div className="mt-6">
+            <h3 className="text-lg font-bold">Encrypted Message</h3>
+            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+              {encryptedMessage}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
   );
