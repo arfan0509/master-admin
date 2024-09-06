@@ -59,7 +59,7 @@ const MachineDetailData: React.FC = () => {
       <div className="flex justify-between items-center mb-4">
         <button
           onClick={handleAddClick}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-gray-700 text-white px-4 py-2 rounded hover:scale-105 transform duration-200"
         >
           Add Data
         </button>
@@ -117,7 +117,7 @@ const MachineDetailData: React.FC = () => {
                 <td className="py-2 px-4 border-b">
                   <button
                     onClick={() => handleEditClick(machineDetail)}
-                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                    className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 hover:scale-105 transform duration-200"
                   >
                     Edit
                   </button>

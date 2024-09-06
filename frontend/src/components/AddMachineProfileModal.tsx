@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { encryptMessage } from "../utils/encryptionUtils"; // Import encryption function
 
 interface AddMachineProfileModalProps {
   onClose: () => void;
@@ -137,18 +138,47 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const formattedDOB = formData.dob
-        ? new Date(formData.dob).toISOString().slice(0, 10)
-        : "";
 
-      await axios.post("/api/machineprofile", {
-        ...formData,
-        dob: formattedDOB,
-      });
+    const formattedDOB = formData.dob
+      ? new Date(formData.dob).toISOString().slice(0, 10)
+      : "";
+
+    // Format data
+    const message = JSON.stringify(
+      {
+        datacore: "MACHINE",
+        folder: "MACHINEPROFILE",
+        command: "INSERT",
+        group: "XCYTUA",
+        property: "PJLBBS",
+        record: {
+          ...formData,
+          dob: formattedDOB,
+        },
+      },
+      null,
+      2
+    );
+
+    // Encrypt the message
+    const encryptedMessage = encryptMessage(message);
+
+    // Prepare payload
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date().toISOString(),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
+    try {
+      const response = await axios.post("/api/machineprofile", payload);
+      console.log("Response from backend:", response.data);
+
       alert("Machine profile created successfully!");
-      onUpdate();
-      onClose();
+      onUpdate(); // Update the machine profiles list
+      onClose(); // Close the modal
     } catch (error) {
       console.error("Error creating machine profile:", error);
     }

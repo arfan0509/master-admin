@@ -3,33 +3,40 @@ import { decryptMessage, encryptMessage } from "../utils/encryptionUtils.js";
 
 // Fungsi untuk membuat profil mesin
 export const createMachineProfile = async (req, res) => {
-  const {
-    objecttype_id,
-    objectgroup_id,
-    objectid_id,
-    objectcode_id,
-    objectstatus,
-    objectname,
-    description,
-    registereddate,
-    registeredno,
-    registeredby,
-    countryoforigin,
-    dob,
-    sex,
-    documentno,
-    vendor_id, // Ubah kolom 'vendor' menjadi 'vendor_id'
-    notes,
-    photogalery_1,
-    photogalery_2,
-    photogalery_3,
-    photogalery_4,
-    photogalery_5,
-    video,
-    active,
-  } = req.body;
+  const { message } = req.body;
 
   try {
+    // Dekripsi pesan yang diterima dari frontend
+    const decryptedMessage = decryptMessage(message);
+
+    // Parse hasil dekripsi menjadi JSON
+    const {
+      objecttype_id,
+      objectgroup_id,
+      objectid_id,
+      objectcode_id,
+      objectstatus,
+      objectname,
+      description,
+      registereddate,
+      registeredno,
+      registeredby,
+      countryoforigin,
+      dob,
+      sex,
+      documentno,
+      vendor_id,
+      notes,
+      photogalery_1,
+      photogalery_2,
+      photogalery_3,
+      photogalery_4,
+      photogalery_5,
+      video,
+      active,
+    } = JSON.parse(decryptedMessage).record;
+
+    // Query untuk memasukkan data ke database
     const insertQuery = `
       INSERT INTO machine.machineprofile (
         objecttype_id, objectgroup_id, objectid_id, objectcode_id, objectstatus, objectname,
@@ -39,6 +46,8 @@ export const createMachineProfile = async (req, res) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
       RETURNING *
     `;
+
+    // Eksekusi query
     const result = await pool.query(insertQuery, [
       objecttype_id,
       objectgroup_id,
@@ -54,7 +63,7 @@ export const createMachineProfile = async (req, res) => {
       dob,
       sex,
       documentno,
-      vendor_id, // Ubah kolom 'vendor' menjadi 'vendor_id'
+      vendor_id,
       notes,
       photogalery_1,
       photogalery_2,
@@ -64,9 +73,62 @@ export const createMachineProfile = async (req, res) => {
       video,
       active,
     ]);
-    res.status(201).json(result.rows[0]);
+
+    const insertedData = result.rows[0]; // Data yang berhasil di-insert
+
+    // Membuat objek yang hanya menyertakan field selain 'id'
+    const responseData = {
+      objecttype_id: insertedData.objecttype_id,
+      objectgroup_id: insertedData.objectgroup_id,
+      objectid_id: insertedData.objectid_id,
+      objectcode_id: insertedData.objectcode_id,
+      objectstatus: insertedData.objectstatus,
+      objectname: insertedData.objectname,
+      description: insertedData.description,
+      registereddate: insertedData.registereddate,
+      registeredno: insertedData.registeredno,
+      registeredby: insertedData.registeredby,
+      countryoforigin: insertedData.countryoforigin,
+      dob: insertedData.dob,
+      sex: insertedData.sex,
+      documentno: insertedData.documentno,
+      vendor_id: insertedData.vendor_id,
+      notes: insertedData.notes,
+      photogalery_1: insertedData.photogalery_1,
+      photogalery_2: insertedData.photogalery_2,
+      photogalery_3: insertedData.photogalery_3,
+      photogalery_4: insertedData.photogalery_4,
+      photogalery_5: insertedData.photogalery_5,
+      video: insertedData.video,
+      active: insertedData.active,
+    };
+
+    // Enkripsi data yang baru dimasukkan ke database
+    const encryptedMessage = encryptMessage(
+      JSON.stringify(responseData, null, 2)
+    );
+
+    // Membuat uniqueid dari variabel environment atau nilai lain
+    const uniqueid = process.env.IV || "defaultUniqueID"; // Kunci unik atau IV
+
+    // Mendapatkan timestamp dalam format YYYYMMDDHHMMSS
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:.TZ]/g, "")
+      .slice(0, 14);
+
+    // Format JSON response
+    const response = {
+      uniqueid: uniqueid,
+      timestamp: timestamp,
+      code: "200",
+      message: encryptedMessage,
+    };
+
+    // Kirim response yang sudah terenkripsi ke frontend
+    res.status(201).json(response);
   } catch (err) {
-    console.error("Database error:", err.message);
+    console.error(err.message);
     res
       .status(500)
       .json({ error: "An error occurred while creating the machine profile" });

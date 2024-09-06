@@ -1,27 +1,35 @@
 import pool from "../database/db.js";
 import { decryptMessage, encryptMessage } from "../utils/encryptionUtils.js";
 
+// Create a new machine ID
 export const createMachineID = async (req, res) => {
-  const {
-    objecttype_id,
-    objectgroup_id,
-    objectid,
-    objectname,
-    icongroup,
-    iconid,
-    countryid,
-    stateid,
-    cityid,
-    regionid,
-    lat,
-    long,
-    active,
-  } = req.body;
+  const { message } = req.body;
 
   try {
+    // Dekripsi pesan yang diterima dari frontend
+    const decryptedMessage = decryptMessage(message);
+    const {
+      objecttype_id,
+      objectgroup_id,
+      objectid,
+      objectname,
+      icongroup,
+      iconid,
+      countryid,
+      stateid,
+      cityid,
+      regionid,
+      lat,
+      long,
+      active,
+    } = JSON.parse(decryptedMessage).record;
+
+    // Insert data ke database
     const insertQuery = `
-      INSERT INTO machine.machineid (objecttype_id, objectgroup_id, objectid, objectname, icongroup, iconid, countryid, stateid, cityid, regionid, lat, long, active)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *
+      INSERT INTO machine.machineid (
+        objecttype_id, objectgroup_id, objectid, objectname, icongroup, iconid, 
+        countryid, stateid, cityid, regionid, lat, long, active
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *
     `;
     const result = await pool.query(insertQuery, [
       objecttype_id,
@@ -38,7 +46,49 @@ export const createMachineID = async (req, res) => {
       long,
       active,
     ]);
-    res.status(201).json(result.rows[0]);
+
+    const insertedData = result.rows[0]; // Data yang berhasil di-insert
+
+    // Membuat objek yang hanya menyertakan field selain 'id'
+    const responseData = {
+      objecttype_id: insertedData.objecttype_id,
+      objectgroup_id: insertedData.objectgroup_id,
+      objectid: insertedData.objectid,
+      objectname: insertedData.objectname,
+      icongroup: insertedData.icongroup,
+      iconid: insertedData.iconid,
+      countryid: insertedData.countryid,
+      stateid: insertedData.stateid,
+      cityid: insertedData.cityid,
+      regionid: insertedData.regionid,
+      lat: insertedData.lat,
+      long: insertedData.long,
+      active: insertedData.active,
+    };
+
+    // Enkripsi data yang baru dimasukkan ke database
+    const encryptedMessage = encryptMessage(
+      JSON.stringify(responseData, null, 2)
+    );
+
+    // Membuat uniqueid
+    const uniqueid = process.env.IV; // Sesuai dengan yang disimpan di .env atau kunci unik lainnya
+
+    // Mendapatkan timestamp dalam format YYYYMMDDHHMMSS
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:.TZ]/g, "")
+      .slice(0, 14);
+
+    // Format JSON response
+    const response = {
+      uniqueid: uniqueid,
+      timestamp: timestamp,
+      code: "200",
+      message: encryptedMessage,
+    };
+
+    res.status(201).json(response); // Mengirimkan respons
   } catch (err) {
     console.error(err.message);
     res

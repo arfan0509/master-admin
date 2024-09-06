@@ -1,6 +1,6 @@
-// src/components/AddMachineIdModal.tsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { encryptMessage } from "../utils/encryptionUtils";
 
 interface AddMachineIdModalProps {
   onClose: () => void;
@@ -71,7 +71,32 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post("/api/machineid", formData);
+      // Format data
+      const message = JSON.stringify(
+        {
+          datacore: "MACHINE",
+          folder: "MACHINEID",
+          command: "INSERT",
+          record: formData,
+        },
+        null,
+        2
+      ); // Pretty print the JSON with indentation
+
+      // Encrypt the message
+      const encryptedMessage = encryptMessage(message);
+
+      // Prepare payload
+      const payload = {
+        apikey: "06EAAA9D10BE3D4386D10144E267B681",
+        uniqueid: "JFKlnUZyyu0MzRqj",
+        timestamp: new Date().toISOString(),
+        localdb: "N",
+        message: encryptedMessage,
+      };
+
+      const response = await axios.post("/api/machineid", payload);
+      console.log("Server response:", response.data); // Add this line to log server response
       alert("Machine ID created successfully!");
       onUpdate();
       onClose();
@@ -123,7 +148,6 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               ))}
             </select>
           </div>
-          {/* Other form fields */}
           <div>
             <label className="block">Object ID</label>
             <input
@@ -163,6 +187,74 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               type="text"
               name="iconid"
               value={formData.iconid}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">Country</label>
+            <input
+              type="text"
+              name="countryid"
+              value={formData.countryid}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">State</label>
+            <input
+              type="text"
+              name="stateid"
+              value={formData.stateid}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">City</label>
+            <input
+              type="text"
+              name="cityid"
+              value={formData.cityid}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">Region</label>
+            <input
+              type="text"
+              name="regionid"
+              value={formData.regionid}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">Latitude</label>
+            <input
+              name="lat"
+              type="number"
+              step="0.0000001"
+              value={formData.lat}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">Longitude</label>
+            <input
+              name="long"
+              type="number"
+              step="0.0000001"
+              value={formData.long}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required

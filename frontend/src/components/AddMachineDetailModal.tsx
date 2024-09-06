@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-
-interface AddMachineDetailModalProps {
-  onClose: () => void;
-  onUpdate: () => void;
-}
+import { encryptMessage } from "../utils/encryptionUtils"; // Pastikan enkripsi diimport
 
 const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
   onClose,
@@ -20,6 +16,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
     long: "",
     active: "",
   });
+
   const [machineTypes, setMachineTypes] = useState<any[]>([]);
   const [machineGroups, setMachineGroups] = useState<any[]>([]);
   const [machineIds, setMachineIds] = useState<any[]>([]);
@@ -82,8 +79,36 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Format data
+    const message = JSON.stringify(
+      {
+        datacore: "MACHINE",
+        folder: "MACHINEDETAIL",
+        command: "INSERT",
+        group: "XCYTUA",
+        property: "PJLBBS",
+        record: formData,
+      },
+      null,
+      2
+    );
+
+    // Encrypt the message
+    const encryptedMessage = encryptMessage(message);
+
+    // Prepare payload
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date().toISOString(),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
     try {
-      await axios.post("/api/machinedetail", formData);
+      const response = await axios.post("/api/machinedetail", payload);
+      console.log("Response from backend:", response.data); // Log the response from backend
       alert("Machine detail created successfully!");
       onUpdate();
       onClose();

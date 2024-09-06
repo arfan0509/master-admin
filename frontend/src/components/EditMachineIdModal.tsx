@@ -216,6 +216,74 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
             />
           </div>
           <div>
+            <label className="block">Country</label>
+            <input
+              type="text"
+              name="countryid"
+              value={formData.countryid}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">State</label>
+            <input
+              type="text"
+              name="stateid"
+              value={formData.stateid}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">City</label>
+            <input
+              type="text"
+              name="cityid"
+              value={formData.cityid}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">Region</label>
+            <input
+              type="text"
+              name="regionid"
+              value={formData.regionid}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">Latitude</label>
+            <input
+              name="lat"
+              type="number"
+              step="0.0000001"
+              value={formData.lat}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block">Longitude</label>
+            <input
+              name="long"
+              type="number"
+              step="0.0000001"
+              value={formData.long}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
             <label className="block">Active</label>
             <div className="mt-1 flex space-x-4">
               <label>
@@ -256,24 +324,6 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
             Cancel
           </button>
         </form>
-
-        {originalJson && (
-          <div className="mt-6">
-            <h3 className="text-lg font-bold">Original JSON</h3>
-            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-              {originalJson}
-            </pre>
-          </div>
-        )}
-
-        {encryptedMessage && (
-          <div className="mt-6">
-            <h3 className="text-lg font-bold">Encrypted Message</h3>
-            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-              {encryptedMessage}
-            </pre>
-          </div>
-        )}
       </div>
     </div>
   );
