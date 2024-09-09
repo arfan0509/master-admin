@@ -174,7 +174,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
 
     try {
       const response = await axios.post("/api/machineprofile", payload);
-      console.log("Response from backend:", response.data);
+      // console.log("Response from backend:", response.data);
 
       alert("Machine profile created successfully!");
       onUpdate(); // Update the machine profiles list

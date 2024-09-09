@@ -80,7 +80,7 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
 
     try {
       const response = await axios.post("/api/machinegroup", payload);
-      console.log("Response from backend:", response.data); // Log the response from backend
+      // console.log("Response from backend:", response.data); // Log the response from backend
 
       alert("Machine group created successfully!");
       onUpdate(); // Fetch and update the machine groups list

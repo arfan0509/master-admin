@@ -108,7 +108,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
 
     try {
       const response = await axios.post("/api/machinedetail", payload);
-      console.log("Response from backend:", response.data); // Log the response from backend
+      // console.log("Response from backend:", response.data); // Log the response from backend
       alert("Machine detail created successfully!");
       onUpdate();
       onClose();

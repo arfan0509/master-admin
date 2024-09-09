@@ -96,7 +96,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
       };
 
       const response = await axios.post("/api/machineid", payload);
-      console.log("Server response:", response.data); // Add this line to log server response
+      // console.log("Server response:", response.data); // Add this line to log server response
       alert("Machine ID created successfully!");
       onUpdate();
       onClose();

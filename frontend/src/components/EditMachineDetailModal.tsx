@@ -137,7 +137,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
         `/api/machinedetail/${machineDetail.id}`,
         payload
       );
-      console.log("Response from backend:", response.data);
+      // console.log("Response from backend:", response.data);
 
       alert("Machine detail updated successfully!");
       onUpdate(); // Update list machine details

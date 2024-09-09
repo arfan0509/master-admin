@@ -88,7 +88,7 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
         `/api/machinetype/${machinetype.id}`, // PUT request
         payload
       );
-      console.log("Response from backend:", response.data);
+      // console.log("Response from backend:", response.data);
 
       alert("Machinetype updated successfully!");
       onUpdate(); // Fetch and update the machinetypes list
@@ -165,7 +165,7 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
           </button>
         </form>
 
-        {originalJson && (
+        {/* {originalJson && (
           <div className="mt-6">
             <h3 className="text-lg font-bold">Original JSON</h3>
             <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
@@ -181,7 +181,7 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
               {encryptedMessage}
             </pre>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

@@ -78,7 +78,7 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
 
     try {
       const response = await axios.post("/api/machinetype", payload);
-      console.log("Response from backend:", response.data); // Log the response from backend
+      // console.log("Response from backend:", response.data); // Log the response from backend
 
       alert("Machine type created successfully!");
       onAdd(); // Fetch and update the machine types list

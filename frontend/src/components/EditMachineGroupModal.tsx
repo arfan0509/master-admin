@@ -105,7 +105,7 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
         `/api/machinegroup/${machineGroup.id}`,
         payload
       );
-      console.log("Response from backend:", response.data);
+      // console.log("Response from backend:", response.data);
 
       alert("Machine group updated successfully!");
       onUpdate(); // Update list machine group
@@ -199,7 +199,7 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
           </button>
         </form>
 
-        {originalJson && (
+        {/* {originalJson && (
           <div className="mt-6">
             <h3 className="text-lg font-bold">Original JSON</h3>
             <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
@@ -215,7 +215,7 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
               {encryptedMessage}
             </pre>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

@@ -161,7 +161,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
         `/api/machineprofile/${machineProfile.id}`,
         payload
       );
-      console.log("Response from backend:", response.data);
+      // console.log("Response from backend:", response.data);
 
       alert("Machine profile updated successfully!");
       onUpdate(); // Update list machine profiles

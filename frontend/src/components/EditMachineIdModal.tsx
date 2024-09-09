@@ -118,7 +118,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
         `/api/machineid/${formData.id}`,
         payload
       );
-      console.log("Response from backend:", response.data);
+      // console.log("Response from backend:", response.data);
 
       alert("Machine ID updated successfully!");
       onUpdate(); // Update list machine ID
