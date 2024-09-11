@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { encryptMessage } from "../utils/encryptionUtils";
 
@@ -14,25 +14,8 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
   const [formData, setFormData] = useState({
     objecttype: "",
     description: "",
-    active: "", // Default value to "Y"
+    active: "Y", // Default value to "Y"
   });
-
-  const [objectTypes, setObjectTypes] = useState<
-    { id: number; objecttype: string }[]
-  >([]);
-
-  useEffect(() => {
-    const fetchObjectTypes = async () => {
-      try {
-        const response = await axios.get("/api/machinetype");
-        setObjectTypes(response.data);
-      } catch (error) {
-        console.error("Error fetching object types:", error);
-      }
-    };
-
-    fetchObjectTypes();
-  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -46,7 +29,7 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Format data
+    // Format data to JSON
     const message = JSON.stringify(
       {
         datacore: "MACHINE",
@@ -56,13 +39,13 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
         property: "PJLBBS",
         record: {
           objecttype: formData.objecttype,
-          description: formData.description,
+          description: `'${formData.description}'`,
           active: formData.active,
         },
       },
       null,
       2
-    ); // Pretty print the JSON with indentation
+    );
 
     // Encrypt the message
     const encryptedMessage = encryptMessage(message);
@@ -77,8 +60,8 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
     };
 
     try {
-      const response = await axios.post("/api/machinetype", payload);
-      // console.log("Response from backend:", response.data); // Log the response from backend
+      const response = await axios.post("/api", payload);
+      console.log("Response from backend:", response.data); // Log the response from backend
 
       alert("Machine type created successfully!");
       onAdd(); // Fetch and update the machine types list

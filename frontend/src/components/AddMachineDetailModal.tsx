@@ -1,20 +1,30 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils"; // Pastikan enkripsi diimport
+import { encryptMessage } from "../utils/encryptionUtils";
+import {
+  fetchMachineTypes,
+  fetchMachineGroups,
+  fetchMachineIds,
+} from "../utils/dropdownUtils";
+
+interface AddMachineDetailModalProps {
+  onClose: () => void;
+  onUpdate: () => void;
+}
 
 const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
   onClose,
   onUpdate,
 }) => {
   const [formData, setFormData] = useState({
-    objecttype_id: "",
-    objectgroup_id: "",
-    objectid_id: "",
+    objecttype: "",
+    objectgroup: "",
+    objectid: "",
     objectcode: "",
     objectname: "",
     lat: "",
     long: "",
-    active: "",
+    active: "Y",
   });
 
   const [machineTypes, setMachineTypes] = useState<any[]>([]);
@@ -23,17 +33,16 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
   const [filteredMachineGroups, setFilteredMachineGroups] = useState<any[]>([]);
   const [filteredMachineIds, setFilteredMachineIds] = useState<any[]>([]);
 
+  // Fetch machine types and groups
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [typesResponse, groupsResponse, idsResponse] = await Promise.all([
-          axios.get("/api/machinetype"),
-          axios.get("/api/machinegroup"),
-          axios.get("/api/machineid"),
+        const [types, groups] = await Promise.all([
+          fetchMachineTypes(),
+          fetchMachineGroups(),
         ]);
-        setMachineTypes(typesResponse.data);
-        setMachineGroups(groupsResponse.data);
-        setMachineIds(idsResponse.data);
+        setMachineTypes(types);
+        setMachineGroups(groups);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -42,31 +51,45 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
     fetchData();
   }, []);
 
+  // Fetch machine IDs
   useEffect(() => {
-    if (formData.objecttype_id) {
+    const fetchIds = async () => {
+      try {
+        const ids = await fetchMachineIds();
+        setMachineIds(ids);
+      } catch (error) {
+        console.error("Error fetching machine IDs:", error);
+      }
+    };
+
+    fetchIds();
+  }, []);
+
+  // Filter machine groups based on selected object type
+  useEffect(() => {
+    if (formData.objecttype) {
       const filteredGroups = machineGroups.filter(
-        (group) => group.objecttype_id === parseInt(formData.objecttype_id)
+        (group) => group.objecttype === formData.objecttype
       );
       setFilteredMachineGroups(filteredGroups);
     } else {
       setFilteredMachineGroups([]);
-      setFormData({ ...formData, objectgroup_id: "", objectid_id: "" });
+      setFormData((prev) => ({ ...prev, objectgroup: "", objectid: "" }));
     }
-  }, [formData.objecttype_id, machineGroups]);
+  }, [formData.objecttype, machineGroups]);
 
+  // Filter machine IDs based on selected object group
   useEffect(() => {
-    if (formData.objecttype_id && formData.objectgroup_id) {
+    if (formData.objectgroup) {
       const filteredIds = machineIds.filter(
-        (id) =>
-          id.objecttype_id === parseInt(formData.objecttype_id) &&
-          id.objectgroup_id === parseInt(formData.objectgroup_id)
+        (id) => id.objectgroup === formData.objectgroup
       );
       setFilteredMachineIds(filteredIds);
     } else {
       setFilteredMachineIds([]);
-      setFormData({ ...formData, objectid_id: "" });
+      setFormData((prev) => ({ ...prev, objectid: "" }));
     }
-  }, [formData.objecttype_id, formData.objectgroup_id, machineIds]);
+  }, [formData.objectgroup, machineIds]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -80,22 +103,30 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Format data
-    const message = JSON.stringify(
-      {
-        datacore: "MACHINE",
-        folder: "MACHINEDETAIL",
-        command: "INSERT",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: formData,
+    // Format the data to be sent
+    const jsonData = {
+      datacore: "MACHINE",
+      folder: "MACHINEDETAIL",
+      command: "INSERT",
+      group: "XCYTUA",
+      property: "PJLBBS",
+      record: {
+        objecttype: formData.objecttype,
+        objectgroup: formData.objectgroup,
+        objectid: formData.objectid,
+        objectcode: formData.objectcode,
+        objectname: formData.objectname,
+        lat: formData.lat,
+        long: formData.long,
+        active: formData.active,
       },
-      null,
-      2
-    );
+    };
 
-    // Encrypt the message
-    const encryptedMessage = encryptMessage(message);
+    // Convert JSON data to pretty-printed string
+    const jsonString = JSON.stringify(jsonData, null, 2);
+
+    // Encrypt JSON data
+    const encryptedMessage = encryptMessage(jsonString);
 
     // Prepare payload
     const payload = {
@@ -106,9 +137,14 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
       message: encryptedMessage,
     };
 
+    // Log JSON and encrypted payload
+    console.log("Original JSON Data:", jsonString);
+    console.log("Encrypted Payload:", JSON.stringify(payload, null, 2));
+
     try {
-      const response = await axios.post("/api/machinedetail", payload);
-      // console.log("Response from backend:", response.data); // Log the response from backend
+      // Send POST request with encrypted payload
+      const response = await axios.post("/api", payload);
+
       alert("Machine detail created successfully!");
       onUpdate();
       onClose();
@@ -129,15 +165,15 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
           <div>
             <label className="block">Object Type</label>
             <select
-              name="objecttype_id"
-              value={formData.objecttype_id}
+              name="objecttype"
+              value={formData.objecttype}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
               {machineTypes.map((type: any) => (
-                <option key={type.id} value={type.id}>
+                <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
               ))}
@@ -146,17 +182,17 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
           <div>
             <label className="block">Object Group</label>
             <select
-              name="objectgroup_id"
-              value={formData.objectgroup_id}
+              name="objectgroup"
+              value={formData.objectgroup}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
-              disabled={!formData.objecttype_id}
+              disabled={!formData.objecttype}
             >
               <option value="">Select Object Group</option>
               {filteredMachineGroups.length > 0 ? (
                 filteredMachineGroups.map((group: any) => (
-                  <option key={group.id} value={group.id}>
+                  <option key={group.id} value={group.objectgroup}>
                     {group.objectgroup}
                   </option>
                 ))
@@ -168,17 +204,17 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
           <div>
             <label className="block">Object ID</label>
             <select
-              name="objectid_id"
-              value={formData.objectid_id}
+              name="objectid"
+              value={formData.objectid}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
-              disabled={!formData.objectgroup_id}
+              disabled={!formData.objectgroup}
             >
               <option value="">Select Object ID</option>
               {filteredMachineIds.length > 0 ? (
                 filteredMachineIds.map((id: any) => (
-                  <option key={id.id} value={id.id}>
+                  <option key={id.objectid} value={id.objectid}>
                     {id.objectid}
                   </option>
                 ))
@@ -212,67 +248,48 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
           <div>
             <label className="block">Latitude</label>
             <input
+              type="text"
               name="lat"
-              type="number"
-              step="0.0000001"
               value={formData.lat}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              required
             />
           </div>
           <div>
             <label className="block">Longitude</label>
             <input
+              type="text"
               name="long"
-              type="number"
-              step="0.0000001"
               value={formData.long}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              required
             />
           </div>
           <div>
             <label className="block">Active</label>
-            <div className="mt-1 flex space-x-4">
-              <label>
-                <input
-                  type="radio"
-                  name="active"
-                  value="Y"
-                  checked={formData.active === "Y"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                Yes
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="active"
-                  value="N"
-                  checked={formData.active === "N"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                No
-              </label>
-            </div>
+            <select
+              name="active"
+              value={formData.active}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            >
+              <option value="Y">Yes</option>
+              <option value="N">No</option>
+            </select>
           </div>
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              className="mr-2 px-4 py-2 bg-gray-300 rounded-md"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md"
             >
-              Save
+              Submit
             </button>
           </div>
         </form>

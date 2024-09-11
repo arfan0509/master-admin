@@ -6,9 +6,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000', // URL backend
+        target: 'http://103.119.54.76:8989', // URL server pihak ketiga
         changeOrigin: true,
-        secure: false, // Jika backend tidak menggunakan HTTPS
+        rewrite: (path) => path.replace(/^\/api/, 'JPxDataClass'), // Menghapus '/api' dari URL
       },
     },
   },

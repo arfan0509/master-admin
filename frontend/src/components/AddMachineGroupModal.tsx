@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { encryptMessage } from "../utils/encryptionUtils";
+import { fetchMachineTypes } from "../utils/dropdownUtils"; // Assuming you have a utility for fetching machine types
 
 interface AddMachineGroupModalProps {
   onClose: () => void;
@@ -12,27 +13,25 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
   onUpdate,
 }) => {
   const [formData, setFormData] = useState({
-    objecttype_id: "",
+    objecttype: "", // updated to match dropdown
     objectgroup: "",
     description: "",
-    active: "", // Default value to "Y"
+    active: "Y", // default value to "Y"
   });
 
-  const [objectTypes, setObjectTypes] = useState<
-    { id: number; objecttype: string }[]
-  >([]);
+  const [machinetypes, setMachinetypes] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchObjectTypes = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get("/api/machinetype");
-        setObjectTypes(response.data);
+        const types = await fetchMachineTypes();
+        setMachinetypes(types);
       } catch (error) {
-        console.error("Error fetching object types:", error);
+        console.error("Error fetching machine types:", error);
       }
     };
 
-    fetchObjectTypes();
+    fetchData();
   }, []);
 
   const handleChange = (
@@ -47,7 +46,7 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Format data
+    // Format the data to be sent
     const message = JSON.stringify(
       {
         datacore: "MACHINE",
@@ -56,20 +55,19 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
         group: "XCYTUA",
         property: "PJLBBS",
         record: {
-          objecttype_id: formData.objecttype_id,
+          objecttype: formData.objecttype,
           objectgroup: formData.objectgroup,
-          description: formData.description,
+          description: `'${formData.description}'`,
           active: formData.active,
         },
       },
       null,
       2
-    ); // Pretty print the JSON with indentation
+    );
 
     // Encrypt the message
     const encryptedMessage = encryptMessage(message);
 
-    // Prepare payload
     const payload = {
       apikey: "06EAAA9D10BE3D4386D10144E267B681",
       uniqueid: "JFKlnUZyyu0MzRqj",
@@ -79,8 +77,7 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
     };
 
     try {
-      const response = await axios.post("/api/machinegroup", payload);
-      // console.log("Response from backend:", response.data); // Log the response from backend
+      const response = await axios.post("/api", payload);
 
       alert("Machine group created successfully!");
       onUpdate(); // Fetch and update the machine groups list
@@ -98,15 +95,15 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
           <div>
             <label className="block">Object Type</label>
             <select
-              name="objecttype_id"
-              value={formData.objecttype_id}
+              name="objecttype"
+              value={formData.objecttype}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
-              {objectTypes.map((type) => (
-                <option key={type.id} value={type.id}>
+              {machinetypes.map((type: any) => (
+                <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
               ))}

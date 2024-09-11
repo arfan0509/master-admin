@@ -26,9 +26,6 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
     active: machinetype.active,
   });
 
-  const [originalJson, setOriginalJson] = useState<string | null>(null);
-  const [encryptedMessage, setEncryptedMessage] = useState<string | null>(null);
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -49,8 +46,8 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
       group: "XCYTUA",
       property: "PJLBBS",
       record: {
-        description: formData.description,
-        active: formData.active,
+        description: `'${formData.description}'`, // Add single quotes around the value
+        active: `'${formData.active}'`, // Add single quotes around the value
       },
       condition: {
         objecttype: {
@@ -66,32 +63,24 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
     // Encrypt JSON data
     const encryptedMessage = encryptMessage(jsonString);
 
-    // Prepare payload with pretty-printed JSON
+    // Prepare payload
     const payload = {
       apikey: "06EAAA9D10BE3D4386D10144E267B681",
       uniqueid: "JFKlnUZyyu0MzRqj",
-      timestamp: new Date()
-        .toISOString()
-        .replace(/[-:.TZ]/g, "")
-        .slice(0, 14),
+      timestamp: new Date().toISOString(),
       localdb: "N",
       message: encryptedMessage,
     };
 
-    // Set state for original JSON and encrypted message (pretty-printed payload)
-    setOriginalJson(JSON.stringify(jsonData, null, 2)); // Pretty print original JSON
-    setEncryptedMessage(JSON.stringify(payload, null, 2)); // Pretty print the encrypted payload
-
     try {
       // Send PUT request with encrypted payload
-      const response = await axios.put(
-        `/api/machinetype/${machinetype.id}`, // PUT request
+      const response = await axios.post(
+        `/api`, // PUT request
         payload
       );
-      // console.log("Response from backend:", response.data);
 
-      alert("Machinetype updated successfully!");
-      onUpdate(); // Fetch and update the machinetypes list
+      alert("Machine type updated successfully!");
+      onUpdate(); // Fetch and update the machine types list
       onClose(); // Close the modal after update
     } catch (error) {
       console.error("Error updating machinetype:", error);
@@ -164,24 +153,6 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
             Cancel
           </button>
         </form>
-
-        {/* {originalJson && (
-          <div className="mt-6">
-            <h3 className="text-lg font-bold">Original JSON</h3>
-            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-              {originalJson}
-            </pre>
-          </div>
-        )}
-
-        {encryptedMessage && (
-          <div className="mt-6">
-            <h3 className="text-lg font-bold">Encrypted Message</h3>
-            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-              {encryptedMessage}
-            </pre>
-          </div>
-        )} */}
       </div>
     </div>
   );

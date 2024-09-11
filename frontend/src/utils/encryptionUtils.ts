@@ -19,8 +19,8 @@ export function encryptMessage(message: string): string {
 
 // Fungsi untuk dekripsi
 export function decryptMessage(encryptedMessage: string): string {
-    const key = CryptoJS.enc.Hex.parse(SECRET_KEY);
-    const iv = CryptoJS.enc.Hex.parse(IV); // Menggunakan Hex parse untuk IV yang berbentuk hex
+    const key = CryptoJS.enc.Utf8.parse(SECRET_KEY);
+    const iv = CryptoJS.enc.Utf8.parse(IV); // Menggunakan Hex parse untuk IV yang berbentuk hex
 
     const encryptedHex = CryptoJS.enc.Hex.parse(encryptedMessage);
     const encryptedBase64 = CryptoJS.enc.Base64.stringify(encryptedHex);

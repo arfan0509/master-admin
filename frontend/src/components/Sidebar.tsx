@@ -12,7 +12,7 @@ const Sidebar = () => {
           src="https://lottie.host/3d4b2349-8888-4a0a-b1a7-9f6e7bb0a3c6/TLq13zbNQO.json" // Path ke animasi .lottie
           loop
           autoplay
-          style={{ height: "35px", width: "35px" }} // Ukuran animasi
+          style={{ height: "45px", width: "35px" }} // Ukuran animasi
         />
         <h1 className="text-xl font-bold ml-2">Master Admin</h1>{" "}
         {/* Logo di sebelah animasi */}

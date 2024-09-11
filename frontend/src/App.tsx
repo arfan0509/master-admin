@@ -2,7 +2,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 
-import MachineprofileForm from "./pages/MachineprofileForm";
 import MachineTypeData from "./pages/MachineTypeData";
 import MachineGroupData from "./pages/MachineGroupData";
 import MachineIdData from "./pages/MachineIdData";
@@ -21,7 +20,6 @@ function App() {
             <Route path="/machineid" element={<MachineIdData />} />
             <Route path="/machinedetail" element={<MachineDetailData />} />
             <Route path="/machineprofile" element={<MachineProfileData />} />
-            <Route path="/machinetype-data" element={<MachineTypeData />} />
           </Routes>
         </div>
       </div>

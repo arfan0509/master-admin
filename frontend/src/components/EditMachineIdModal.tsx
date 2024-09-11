@@ -1,9 +1,27 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils"; // Menggunakan enkripsi yang sama
+import { encryptMessage } from "../utils/encryptionUtils";
+import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils"; // Import dari file utilitas
+
+interface MachineId {
+  id: number;
+  objecttype: string;
+  objectgroup: string;
+  objectid: string;
+  objectname: string;
+  icongroup: string;
+  iconid: string;
+  countryid: string;
+  stateid: string;
+  cityid: string;
+  regionid: string;
+  lat: string;
+  long: string;
+  active: string;
+}
 
 interface EditMachineIdModalProps {
-  machineId: any;
+  machineId: MachineId;
   onClose: () => void;
   onUpdate: () => void;
 }
@@ -14,38 +32,44 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
   onUpdate,
 }) => {
   const [formData, setFormData] = useState({
-    objecttype_id: "",
-    objectgroup_id: "",
-    objectid: "",
-    objectname: "",
-    icongroup: "",
-    iconid: "",
-    countryid: "",
-    stateid: "",
-    cityid: "",
-    regionid: "",
-    lat: "",
-    long: "",
-    active: "Y",
+    id: machineId.id,
+    objecttype: machineId.objecttype,
+    objectgroup: machineId.objectgroup,
+    objectid: machineId.objectid,
+    objectname: machineId.objectname,
+    icongroup: machineId.icongroup,
+    iconid: machineId.iconid,
+    countryid: machineId.countryid,
+    stateid: machineId.stateid,
+    cityid: machineId.cityid,
+    regionid: machineId.regionid,
+    lat: machineId.lat,
+    long: machineId.long,
+    active: machineId.active,
   });
-  const [machinetypes, setMachinetypes] = useState<any[]>([]);
-  const [machinegroups, setMachinegroups] = useState<any[]>([]);
-  const [filteredMachinegroups, setFilteredMachinegroups] = useState<any[]>([]);
-  const [originalJson, setOriginalJson] = useState<string | null>(null);
-  const [encryptedMessage, setEncryptedMessage] = useState<string | null>(null);
+
+  const [machinetypes, setMachinetypes] = useState<
+    { id: number; objecttype: string }[]
+  >([]);
+  const [machinegroups, setMachinegroups] = useState<
+    { id: number; objecttype: string; objectgroup: string }[]
+  >([]);
+  const [filteredMachinegroups, setFilteredMachinegroups] = useState<
+    { id: number; objecttype: string; objectgroup: string }[]
+  >([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [typesResponse, groupsResponse] = await Promise.all([
-          axios.get("/api/machinetype"),
-          axios.get("/api/machinegroup"),
+        const [types, groups] = await Promise.all([
+          fetchMachineTypes(),
+          fetchMachineGroups(),
         ]);
-        setMachinetypes(typesResponse.data);
-        setMachinegroups(groupsResponse.data);
-        setFormData({
-          ...machineId,
-        });
+        setMachinetypes(types);
+        setMachinegroups(groups);
+        setFilteredMachinegroups(
+          groups.filter((group) => group.objecttype === machineId.objecttype)
+        );
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -55,16 +79,16 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
   }, [machineId]);
 
   useEffect(() => {
-    if (formData.objecttype_id) {
+    if (formData.objecttype) {
       // Filter machine groups based on selected object type
       const filteredGroups = machinegroups.filter(
-        (group) => group.objecttype_id === parseInt(formData.objecttype_id)
+        (group) => group.objecttype === formData.objecttype
       );
       setFilteredMachinegroups(filteredGroups);
     } else {
       setFilteredMachinegroups([]);
     }
-  }, [formData.objecttype_id, machinegroups]);
+  }, [formData.objecttype, machinegroups]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -78,47 +102,55 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Format JSON data yang akan dienkripsi
+    // Format JSON data sesuai dengan format yang diharapkan backend
     const jsonData = {
       datacore: "MACHINE",
       folder: "MACHINEID",
       command: "UPDATE",
       group: "XCYTUA",
       property: "PJLBBS",
-      record: formData,
+      record: {
+        objecttype: formData.objecttype,
+        objectgroup: formData.objectgroup,
+        objectid: formData.objectid,
+        objectname: `'${formData.objectname}'`,
+        icongroup: formData.icongroup,
+        iconid: formData.iconid,
+        countryid: formData.countryid,
+        stateid: formData.stateid,
+        cityid: formData.cityid,
+        regionid: formData.regionid,
+        lat: formData.lat,
+        long: formData.long,
+        active: formData.active,
+      },
       condition: {
-        id: formData.id,
+        id: {
+          operator: "eq",
+          value: formData.id,
+        },
       },
     };
 
-    // Pretty print JSON
-    const jsonString = JSON.stringify(jsonData, null, 2);
+    // Convert JSON data to pretty-printed string
+    const jsonString = JSON.stringify(jsonData, null, 2); // Pretty print JSON with indentation
 
     // Encrypt JSON data
     const encryptedMessage = encryptMessage(jsonString);
+    // console.log(encryptedMessage);
 
-    // Payload yang akan dikirimkan ke backend
+    // Prepare payload
     const payload = {
       apikey: "06EAAA9D10BE3D4386D10144E267B681",
       uniqueid: "JFKlnUZyyu0MzRqj",
-      timestamp: new Date()
-        .toISOString()
-        .replace(/[-:.TZ]/g, "")
-        .slice(0, 14),
+      timestamp: new Date().toISOString(),
       localdb: "N",
       message: encryptedMessage,
     };
 
-    setOriginalJson(jsonString); // JSON asli sebelum enkripsi
-    setEncryptedMessage(JSON.stringify(payload, null, 2)); // Pretty printed encrypted payload
-
     try {
-      // PUT request ke backend
-      const response = await axios.put(
-        `/api/machineid/${formData.id}`,
-        payload
-      );
-      // console.log("Response from backend:", response.data);
+      // Send PUT request with encrypted payload
+      const response = await axios.post(`/api`, payload);
 
       alert("Machine ID updated successfully!");
       onUpdate(); // Update list machine ID
@@ -140,15 +172,15 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
           <div>
             <label className="block">Object Type</label>
             <select
-              name="objecttype_id"
-              value={formData.objecttype_id}
+              name="objecttype"
+              value={formData.objecttype}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
-              {machinetypes.map((type: any) => (
-                <option key={type.id} value={type.id}>
+              {machinetypes.map((type) => (
+                <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
               ))}
@@ -157,15 +189,15 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
           <div>
             <label className="block">Object Group</label>
             <select
-              name="objectgroup_id"
-              value={formData.objectgroup_id}
+              name="objectgroup"
+              value={formData.objectgroup}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Group</option>
-              {filteredMachinegroups.map((group: any) => (
-                <option key={group.id} value={group.id}>
+              {filteredMachinegroups.map((group) => (
+                <option key={group.id} value={group.objectgroup}>
                   {group.objectgroup}
                 </option>
               ))}
@@ -262,9 +294,8 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
           <div>
             <label className="block">Latitude</label>
             <input
+              type="text"
               name="lat"
-              type="number"
-              step="0.0000001"
               value={formData.lat}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
@@ -274,9 +305,8 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
           <div>
             <label className="block">Longitude</label>
             <input
+              type="text"
               name="long"
-              type="number"
-              step="0.0000001"
               value={formData.long}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
@@ -285,44 +315,30 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
           </div>
           <div>
             <label className="block">Active</label>
-            <div className="mt-1 flex space-x-4">
-              <label>
-                <input
-                  type="radio"
-                  name="active"
-                  value="Y"
-                  checked={formData.active === "Y"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                Yes
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="active"
-                  value="N"
-                  checked={formData.active === "N"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                No
-              </label>
-            </div>
+            <input
+              type="text"
+              name="active"
+              value={formData.active}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
           </div>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded-md"
-          >
-            Save Changes
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md ml-2"
-          >
-            Cancel
-          </button>
+          <div className="flex justify-end space-x-4 mt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-500 text-white rounded-md"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+            >
+              Update
+            </button>
+          </div>
         </form>
       </div>
     </div>

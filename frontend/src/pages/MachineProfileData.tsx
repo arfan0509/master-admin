@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { ResizableBox } from "react-resizable";
-import "react-resizable/css/styles.css";
-
-// Import modal components
+import { encryptMessage, decryptMessage } from "../utils/encryptionUtils";
 import AddMachineProfileModal from "../components/AddMachineProfileModal";
 import EditMachineProfileModal from "../components/EditMachineProfileModal";
 
 interface MachineProfile {
   id: number;
-  objecttype_name: string; // Update nama properti untuk objecttype
-  objectgroup_name: string; // Update nama properti untuk objectgroup
-  objectid_name: string; // Update nama properti untuk objectid
-  objectcode_name: string; // Update nama properti untuk objectcode
-  objectname: string;
+  objecttype: string;
+  objectgroup: string;
+  objectid: string;
+  objectcode: string;
   objectstatus: string;
+  objectname: string;
   description: string;
   registereddate: string;
   registeredno: string;
@@ -23,7 +20,7 @@ interface MachineProfile {
   dob: string;
   sex: string;
   documentno: string;
-  vendor_name: string; // Ganti dengan vendor_name
+  vendor_name: string;
   notes: string;
   photogalery_1: string;
   photogalery_2: string;
@@ -36,10 +33,10 @@ interface MachineProfile {
 
 const columns = [
   { key: "id", name: "ID" },
-  { key: "objecttype_name", name: "Object Type" }, // Update kolom untuk nama objecttype
-  { key: "objectgroup_name", name: "Object Group" }, // Update kolom untuk nama objectgroup
-  { key: "objectid_name", name: "Object ID" }, // Update kolom untuk nama objectid
-  { key: "objectcode_name", name: "Object Code" }, // Update kolom untuk nama objectcode
+  { key: "objecttype", name: "Object Type" },
+  { key: "objectgroup", name: "Object Group" },
+  { key: "objectid", name: "Object ID" },
+  { key: "objectcode", name: "Object Code" },
   { key: "objectname", name: "Object Name" },
   { key: "objectstatus", name: "Object Status" },
   { key: "description", name: "Description" },
@@ -50,7 +47,7 @@ const columns = [
   { key: "dob", name: "DOB" },
   { key: "sex", name: "Sex" },
   { key: "documentno", name: "Document No" },
-  { key: "vendor_name", name: "Vendor" }, // Ganti dengan vendor_name
+  { key: "vendor_name", name: "Vendor" },
   { key: "notes", name: "Notes" },
   { key: "photogalery_1", name: "Photo Gallery 1" },
   { key: "photogalery_2", name: "Photo Gallery 2" },
@@ -69,17 +66,64 @@ const MachineProfileData: React.FC = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const profilesPerPage = 10; // 10 data per halaman
+
   useEffect(() => {
     fetchMachineProfiles();
   }, []);
 
   const fetchMachineProfiles = async () => {
+    // Menyiapkan data untuk POST
+    const requestPayload = {
+      datacore: "MACHINE",
+      folder: "MACHINEPROFILE",
+      command: "SELECT",
+      group: "XCYTUA",
+      property: "PJLBBS",
+      fields: "*", // Ambil semua field
+      pageno: "0",
+      recordperpage: "20",
+      condition: {
+        active: {
+          operator: "eq",
+          value: "Y",
+        },
+      },
+    };
+
+    const message = JSON.stringify(requestPayload, null, 2);
+    const encryptedMessage = encryptMessage(message);
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date().toISOString(),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
     try {
-      const response = await axios.get("/api/machineprofile");
-      const sortedMachineProfiles = response.data.sort(
-        (a: MachineProfile, b: MachineProfile) => a.id - b.id
-      );
-      setMachineProfiles(sortedMachineProfiles);
+      // Mengirim request
+      const response = await axios.post("/api", payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      // Dekripsi data yang diterima
+      const decryptedMessage = decryptMessage(response.data.message);
+      const result = JSON.parse(decryptedMessage);
+
+      // Pastikan data yang diterima adalah array
+      if (Array.isArray(result.data)) {
+        const sortedMachineProfiles = result.data.sort(
+          (a: MachineProfile, b: MachineProfile) => a.id - b.id
+        );
+        setMachineProfiles(sortedMachineProfiles);
+      } else {
+        console.error("Data yang diterima bukan array:", result);
+      }
     } catch (err) {
       console.error("Error fetching machine profiles:", err);
     }
@@ -101,6 +145,23 @@ const MachineProfileData: React.FC = () => {
   const handleUpdate = () => {
     fetchMachineProfiles();
   };
+
+  // Pagination logic
+  const indexOfLastProfile = currentPage * profilesPerPage;
+  const indexOfFirstProfile = indexOfLastProfile - profilesPerPage;
+  const currentProfiles = machineProfiles
+    .filter((profile) =>
+      profile.objectname.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .slice(indexOfFirstProfile, indexOfLastProfile);
+
+  const totalPages = Math.ceil(
+    machineProfiles.filter((profile) =>
+      profile.objectname.toLowerCase().includes(searchQuery.toLowerCase())
+    ).length / profilesPerPage
+  );
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
     <div className="container mx-auto mt-4 p-4">
@@ -128,16 +189,6 @@ const MachineProfileData: React.FC = () => {
                   <th key={column.key} className="py-3 px-2 text-left">
                     <div className="flex items-center">
                       <span className="truncate">{column.name}</span>
-                      <ResizableBox
-                        width={80}
-                        height={20}
-                        axis="x"
-                        minConstraints={[40, 20]}
-                        maxConstraints={[200, 20]}
-                        className="ml-2"
-                      >
-                        <div className="w-full h-full cursor-col-resize " />
-                      </ResizableBox>
                     </div>
                   </th>
                 ))}
@@ -145,39 +196,50 @@ const MachineProfileData: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {machineProfiles
-                .filter((profile) =>
-                  profile.objectname
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-                )
-                .map((profile) => (
-                  <tr key={profile.id} className="hover:bg-gray-100">
-                    {columns.map((column) => (
-                      <td key={column.key} className="py-2 px-2 border-b">
-                        {profile[column.key as keyof MachineProfile] || "-"}
-                      </td>
-                    ))}
-                    <td className="py-2 px-2 border-b">
-                      <button
-                        onClick={() => handleEditClick(profile)}
-                        className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 hover:scale-105 transform duration-200"
-                      >
-                        Edit
-                      </button>
+              {currentProfiles.map((profile) => (
+                <tr key={profile.id} className="hover:bg-gray-100">
+                  {columns.map((column) => (
+                    <td key={column.key} className="py-2 px-2 border-b">
+                      {profile[column.key as keyof MachineProfile] || "-"}
                     </td>
-                  </tr>
-                ))}
+                  ))}
+                  <td className="py-2 px-2 border-b">
+                    <button
+                      onClick={() => handleEditClick(profile)}
+                      className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 hover:scale-105 transform duration-200"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Pagination controls */}
+      <div className="flex justify-center mt-4">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <button
+            key={page}
+            onClick={() => paginate(page)}
+            className={`mx-1 px-3 py-1 border rounded ${
+              currentPage === page ? "bg-gray-800 text-white" : "bg-gray-200"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+      </div>
+
       {addModalOpen && (
         <AddMachineProfileModal
           onClose={() => setAddModalOpen(false)}
           onUpdate={handleUpdate}
         />
       )}
+
       {editModalOpen && selectedMachineProfile && (
         <EditMachineProfileModal
           machineProfile={selectedMachineProfile}

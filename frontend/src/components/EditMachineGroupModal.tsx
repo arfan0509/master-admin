@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils"; // Menggunakan enkripsi yang sama
+import { encryptMessage } from "../utils/encryptionUtils";
+import { fetchMachineTypes } from "../utils/dropdownUtils";
 
 interface MachineGroup {
   id: number;
-  objecttype_id: number;
+  objecttype: string; // Tipe objek
   objectgroup: string;
   description: string;
   active: string;
@@ -22,7 +23,7 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
   onUpdate,
 }) => {
   const [formData, setFormData] = useState({
-    objecttype_id: machineGroup.objecttype_id,
+    objecttype: machineGroup.objecttype,
     objectgroup: machineGroup.objectgroup,
     description: machineGroup.description,
     active: machineGroup.active,
@@ -38,8 +39,8 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
   useEffect(() => {
     const fetchObjectTypes = async () => {
       try {
-        const response = await axios.get("/api/machinetype");
-        setObjectTypes(response.data);
+        const response = await fetchMachineTypes();
+        setObjectTypes(response);
       } catch (error) {
         console.error("Error fetching object types:", error);
       }
@@ -63,18 +64,20 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
     // Format JSON data yang akan dienkripsi
     const jsonData = {
       datacore: "MACHINE",
-      folder: "MACHINEGROUP",
+      folder: "MACHINEGROUP", // Folder yang sesuai
       command: "UPDATE",
       group: "XCYTUA",
       property: "PJLBBS",
       record: {
-        objecttype_id: formData.objecttype_id,
-        objectgroup: formData.objectgroup,
-        description: formData.description,
-        active: formData.active,
+        objectgroup: `'${formData.objectgroup}'`,
+        description: `'${formData.description}'`,
+        active: `'${formData.active}'`,
       },
       condition: {
-        id: machineGroup.id,
+        objecttype: {
+          operator: "eq",
+          value: formData.objecttype, // Menyesuaikan dengan objecttype yang dipilih
+        },
       },
     };
 
@@ -100,11 +103,8 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
     setEncryptedMessage(JSON.stringify(payload, null, 2)); // Pretty printed encrypted payload
 
     try {
-      // PUT request ke backend
-      const response = await axios.put(
-        `/api/machinegroup/${machineGroup.id}`,
-        payload
-      );
+      // POST request ke backend
+      const response = await axios.post("/api", payload);
       // console.log("Response from backend:", response.data);
 
       alert("Machine group updated successfully!");
@@ -117,21 +117,21 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Edit Machine Group</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block">Object Type</label>
             <select
-              name="objecttype_id"
-              value={formData.objecttype_id}
+              name="objecttype"
+              value={formData.objecttype}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
               {objectTypes.map((type) => (
-                <option key={type.id} value={type.id}>
+                <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
               ))}
@@ -198,24 +198,6 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
             Cancel
           </button>
         </form>
-
-        {/* {originalJson && (
-          <div className="mt-6">
-            <h3 className="text-lg font-bold">Original JSON</h3>
-            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-              {originalJson}
-            </pre>
-          </div>
-        )}
-
-        {encryptedMessage && (
-          <div className="mt-6">
-            <h3 className="text-lg font-bold">Encrypted Message</h3>
-            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-              {encryptedMessage}
-            </pre>
-          </div>
-        )} */}
       </div>
     </div>
   );

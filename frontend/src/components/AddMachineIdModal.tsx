@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { encryptMessage } from "../utils/encryptionUtils";
+import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
+
+interface MachineType {
+  id: number;
+  objecttype: string;
+}
+
+interface MachineGroup {
+  id: number;
+  objecttype: string;
+  objectgroup: string;
+}
 
 interface AddMachineIdModalProps {
   onClose: () => void;
@@ -12,8 +24,8 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
   onUpdate,
 }) => {
   const [formData, setFormData] = useState({
-    objecttype_id: "",
-    objectgroup_id: "",
+    objecttype: "",
+    objectgroup: "",
     objectid: "",
     objectname: "",
     icongroup: "",
@@ -24,21 +36,24 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
     regionid: "",
     lat: "",
     long: "",
-    active: "",
+    active: "Y",
   });
-  const [machinetypes, setMachinetypes] = useState<any[]>([]);
-  const [machinegroups, setMachinegroups] = useState<any[]>([]);
-  const [filteredMachinegroups, setFilteredMachinegroups] = useState<any[]>([]);
+
+  const [machinetypes, setMachinetypes] = useState<MachineType[]>([]);
+  const [machinegroups, setMachinegroups] = useState<MachineGroup[]>([]);
+  const [filteredMachinegroups, setFilteredMachinegroups] = useState<
+    MachineGroup[]
+  >([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [typesResponse, groupsResponse] = await Promise.all([
-          axios.get("/api/machinetype"),
-          axios.get("/api/machinegroup"),
+        const [types, groups] = await Promise.all([
+          fetchMachineTypes(),
+          fetchMachineGroups(),
         ]);
-        setMachinetypes(typesResponse.data);
-        setMachinegroups(groupsResponse.data);
+        setMachinetypes(types);
+        setMachinegroups(groups);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -48,16 +63,25 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
   }, []);
 
   useEffect(() => {
-    if (formData.objecttype_id) {
+    if (formData.objecttype) {
       // Filter machine groups based on selected object type
       const filteredGroups = machinegroups.filter(
-        (group) => group.objecttype_id === parseInt(formData.objecttype_id)
+        (group) => group.objecttype === formData.objecttype
       );
       setFilteredMachinegroups(filteredGroups);
+      // Reset objectgroup if it no longer matches filtered groups
+      if (
+        !filteredGroups.find(
+          (group) => group.objectgroup === formData.objectgroup
+        )
+      ) {
+        setFormData((prev) => ({ ...prev, objectgroup: "" }));
+      }
     } else {
       setFilteredMachinegroups([]);
+      setFormData((prev) => ({ ...prev, objectgroup: "" }));
     }
-  }, [formData.objecttype_id, machinegroups]);
+  }, [formData.objecttype, machinegroups]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -70,38 +94,59 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Format JSON message
+    const message = JSON.stringify({
+      datacore: "MACHINE",
+      folder: "MACHINEID",
+      command: "INSERT",
+      group: "XCYTUA",
+      property: "PJLBBS",
+      record: {
+        objecttype: formData.objecttype,
+        objectgroup: formData.objectgroup,
+        objectid: formData.objectid,
+        objectname: `'${formData.objectname}'`,
+        icongroup: formData.icongroup,
+        iconid: formData.iconid,
+        countryid: formData.countryid,
+        stateid: formData.stateid,
+        cityid: formData.cityid,
+        regionid: formData.regionid,
+        lat: formData.lat,
+        long: formData.long,
+        active: formData.active,
+      },
+    });
+
+    // Encrypt the message
+    const encryptedMessage = encryptMessage(message);
+
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date().toISOString(),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
     try {
-      // Format data
-      const message = JSON.stringify(
-        {
-          datacore: "MACHINE",
-          folder: "MACHINEID",
-          command: "INSERT",
-          record: formData,
+      const response = await axios.post("/api", payload, {
+        headers: {
+          "Content-Type": "application/json",
         },
-        null,
-        2
-      ); // Pretty print the JSON with indentation
+      });
 
-      // Encrypt the message
-      const encryptedMessage = encryptMessage(message);
-
-      // Prepare payload
-      const payload = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date().toISOString(),
-        localdb: "N",
-        message: encryptedMessage,
-      };
-
-      const response = await axios.post("/api/machineid", payload);
-      // console.log("Server response:", response.data); // Add this line to log server response
-      alert("Machine ID created successfully!");
-      onUpdate();
-      onClose();
+      if (response.status === 200 || response.status === 201) {
+        console.log("Machine ID created successfully!");
+        onUpdate(); // Inform the parent component to update data
+        onClose(); // Close the modal
+      } else {
+        console.error("Unexpected response status:", response.status);
+        console.error("Response data:", response.data);
+      }
     } catch (error) {
-      console.error("Error creating machine ID:", error);
+      console.error("Error creating Machine ID:", error);
     }
   };
 
@@ -117,15 +162,15 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
           <div>
             <label className="block">Object Type</label>
             <select
-              name="objecttype_id"
-              value={formData.objecttype_id}
+              name="objecttype"
+              value={formData.objecttype}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
-              {machinetypes.map((type: any) => (
-                <option key={type.id} value={type.id}>
+              {machinetypes.map((type) => (
+                <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
               ))}
@@ -134,15 +179,15 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
           <div>
             <label className="block">Object Group</label>
             <select
-              name="objectgroup_id"
-              value={formData.objectgroup_id}
+              name="objectgroup"
+              value={formData.objectgroup}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Group</option>
-              {filteredMachinegroups.map((group: any) => (
-                <option key={group.id} value={group.id}>
+              {filteredMachinegroups.map((group) => (
+                <option key={group.id} value={group.objectgroup}>
                   {group.objectgroup}
                 </option>
               ))}
@@ -262,44 +307,32 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
           </div>
           <div>
             <label className="block">Active</label>
-            <div className="mt-1 flex space-x-4">
-              <label>
-                <input
-                  type="radio"
-                  name="active"
-                  value="Y"
-                  checked={formData.active === "Y"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                Yes
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="active"
-                  value="N"
-                  checked={formData.active === "N"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                No
-              </label>
-            </div>
+            <select
+              name="active"
+              value={formData.active}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            >
+              <option value="Y">Yes</option>
+              <option value="N">No</option>
+            </select>
           </div>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded-md"
-          >
-            Add Machine ID
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md ml-2"
-          >
-            Cancel
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="mr-2 px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-blue-600 text-white"
+            >
+              Submit
+            </button>
+          </div>
         </form>
       </div>
     </div>
