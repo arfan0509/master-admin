@@ -71,7 +71,21 @@ export const fetchMachineGroups = async (): Promise<any[]> => {
 export const fetchMachineIds = async (): Promise<any[]> => {
   return fetchDropdownData(
     "MACHINEID",
-    "id, objecttype, objectgroup, objectid, objectname, icongroup, iconid, countryid, stateid, cityid, regionid, lat, long, active",
+    "id, objecttype, objectgroup, objectid, objectname, active",
+    {
+      active: {
+        operator: "eq",
+        value: "Y",
+      },
+    }
+  );
+};
+
+// Fungsi untuk mengambil data machinedetail
+export const fetchMachineDetails = async (): Promise<any[]> => {
+  return fetchDropdownData(
+    "MACHINEDETAIL",
+    "id, objecttype, objectgroup, objectid, objectcode, objectname, active",
     {
       active: {
         operator: "eq",

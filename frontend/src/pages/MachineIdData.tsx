@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AddMachineIdModal from "../components/AddMachineIdModal";
 import EditMachineIdModal from "../components/EditMachineIdModal";
-import { encryptMessage, decryptMessage } from "../utils/encryptionUtils"; // Pastikan import sesuai dengan lokasi sebenarnya
+import { encryptMessage, decryptMessage } from "../utils/encryptionUtils";
 
 interface MachineId {
   id: number;
@@ -27,17 +27,17 @@ const MachineIdData: React.FC = () => {
   const [selectedMachineId, setSelectedMachineId] = useState<MachineId | null>(
     null
   );
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState({ add: false, edit: false });
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
+  const [sortKey, setSortKey] = useState<keyof MachineId>("id");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     fetchMachineIds();
   }, []);
 
   const fetchMachineIds = async () => {
-    // Menyiapkan data untuk POST
     const requestPayload = {
       datacore: "MACHINE",
       folder: "MACHINEID",
@@ -67,21 +67,22 @@ const MachineIdData: React.FC = () => {
     };
 
     try {
-      // Mengirim request
       const response = await axios.post("/api", payload, {
         headers: {
           "Content-Type": "application/json",
         },
       });
 
-      // Dekripsi data yang diterima
       const decryptedMessage = decryptMessage(response.data.message);
       const result = JSON.parse(decryptedMessage);
 
-      // Pastikan data yang diterima adalah array
       if (Array.isArray(result.data)) {
         const sortedMachineIds = result.data.sort(
-          (a: MachineId, b: MachineId) => a.id - b.id
+          (a: MachineId, b: MachineId) => {
+            if (a[sortKey] < b[sortKey]) return sortOrder === "asc" ? -1 : 1;
+            if (a[sortKey] > b[sortKey]) return sortOrder === "asc" ? 1 : -1;
+            return 0;
+          }
         );
         setMachineIds(sortedMachineIds);
       } else {
@@ -97,19 +98,23 @@ const MachineIdData: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleEditClick = (machineId: MachineId) => {
-    // console.log("Selected Machine ID:", machineId); // Tambahkan log ini
-    setSelectedMachineId(machineId);
-    setEditModalOpen(true);
+  const handleAddClick = () => {
+    setModalOpen({ add: true, edit: false });
   };
 
-  const handleAddClick = () => {
-    setAddModalOpen(true);
+  const handleEditClick = (machineId: MachineId) => {
+    setSelectedMachineId(machineId);
+    setModalOpen({ add: false, edit: true });
   };
 
   const handleUpdate = () => {
     fetchMachineIds();
-    setEditModalOpen(false);
+  };
+
+  const handleSort = (key: keyof MachineId) => {
+    setSortKey(key);
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    fetchMachineIds();
   };
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -131,69 +136,97 @@ const MachineIdData: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto mt-4 p-4">
-      <div className="flex justify-between items-center mb-4">
-        <button
-          onClick={handleAddClick}
-          className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 hover:scale-105 transform duration-200"
-        >
-          Add Data
-        </button>
-        <input
-          type="text"
-          placeholder="Search object ID..."
-          value={searchQuery}
-          onChange={handleSearch}
-          className="border border-gray-300 px-4 py-2 rounded shadow-sm w-full sm:w-1/3"
-        />
-      </div>
-      <div className="overflow-x-auto">
-        <div className="max-w-5xl overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm">
-            <thead className="bg-gray-100 border-b border-gray-300">
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded">
+      <header className="p-6 bg-[#385878] text-white">
+        <h1 className="text-3xl font-semibold">Machine ID Data</h1>
+      </header>
+      <main className="flex flex-col flex-1 overflow-hidden p-6">
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={handleAddClick}
+            className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+          >
+            Add Data
+          </button>
+          <input
+            type="text"
+            placeholder="Search object ID..."
+            value={searchQuery}
+            onChange={handleSearch}
+            className="border border-gray-300 px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-[#385878]"
+          />
+        </div>
+        <div className="flex-1 overflow-x-auto">
+          <table className="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+            <thead className="bg-gray-100 text-gray-800 border-b">
               <tr>
-                <th className="py-3 px-4 text-left">No</th>
-                <th className="py-3 px-4 text-left">Object Type</th>
-                <th className="py-3 px-4 text-left">Object Group</th>
-                <th className="py-3 px-4 text-left">Object ID</th>
-                <th className="py-3 px-4 text-left">Object Name</th>
-                <th className="py-3 px-4 text-left">Icon Group</th>
-                <th className="py-3 px-4 text-left">Icon ID</th>
-                <th className="py-3 px-4 text-left">Country ID</th>
-                <th className="py-3 px-4 text-left">State ID</th>
-                <th className="py-3 px-4 text-left">City ID</th>
-                <th className="py-3 px-4 text-left">Region ID</th>
-                <th className="py-3 px-4 text-left">Lat</th>
-                <th className="py-3 px-4 text-left">Long</th>
-                <th className="py-3 px-4 text-left">Active</th>
-                <th className="py-3 px-4 text-left">Actions</th>
+                <th
+                  className="py-4 px-6 text-left cursor-pointer"
+                  onClick={() => handleSort("id")}
+                >
+                  No {sortKey === "id" && (sortOrder === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  className="py-4 px-6 text-left cursor-pointer"
+                  onClick={() => handleSort("objecttype")}
+                >
+                  Object Type{" "}
+                  {sortKey === "objecttype" &&
+                    (sortOrder === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  className="py-4 px-6 text-left cursor-pointer"
+                  onClick={() => handleSort("objectgroup")}
+                >
+                  Object Group{" "}
+                  {sortKey === "objectgroup" &&
+                    (sortOrder === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  className="py-4 px-6 text-left cursor-pointer"
+                  onClick={() => handleSort("objectid")}
+                >
+                  Object ID{" "}
+                  {sortKey === "objectid" && (sortOrder === "asc" ? "↑" : "↓")}
+                </th>
+                <th className="py-4 px-6 text-left">Object Name</th>
+                <th className="py-4 px-6 text-left">Icon Group</th>
+                <th className="py-4 px-6 text-left">Icon ID</th>
+                <th className="py-4 px-6 text-left">Country ID</th>
+                <th className="py-4 px-6 text-left">State ID</th>
+                <th className="py-4 px-6 text-left">City ID</th>
+                <th className="py-4 px-6 text-left">Region ID</th>
+                <th className="py-4 px-6 text-left">Lat</th>
+                <th className="py-4 px-6 text-left">Long</th>
+                <th className="py-4 px-6 text-left">Active</th>
+                <th className="py-4 px-6 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
               {currentItems.map((machineId, index) => (
-                <tr key={machineId.id} className="hover:bg-gray-100">
-                  <td className="py-2 px-4 border-b">
+                <tr key={machineId.id} className="hover:bg-[#3858780d]">
+                  <td className="py-4 px-6 border-b">
                     {indexOfFirstItem + index + 1}
                   </td>
-                  <td className="py-2 px-4 border-b">{machineId.objecttype}</td>
-                  <td className="py-2 px-4 border-b">
+                  <td className="py-4 px-6 border-b">{machineId.objecttype}</td>
+                  <td className="py-4 px-6 border-b">
                     {machineId.objectgroup}
                   </td>
-                  <td className="py-2 px-4 border-b">{machineId.objectid}</td>
-                  <td className="py-2 px-4 border-b">{machineId.objectname}</td>
-                  <td className="py-2 px-4 border-b">{machineId.icongroup}</td>
-                  <td className="py-2 px-4 border-b">{machineId.iconid}</td>
-                  <td className="py-2 px-4 border-b">{machineId.countryid}</td>
-                  <td className="py-2 px-4 border-b">{machineId.stateid}</td>
-                  <td className="py-2 px-4 border-b">{machineId.cityid}</td>
-                  <td className="py-2 px-4 border-b">{machineId.regionid}</td>
-                  <td className="py-2 px-4 border-b">{machineId.lat}</td>
-                  <td className="py-2 px-4 border-b">{machineId.long}</td>
-                  <td className="py-2 px-4 border-b">{machineId.active}</td>
-                  <td className="py-2 px-4 border-b">
+                  <td className="py-4 px-6 border-b">{machineId.objectid}</td>
+                  <td className="py-4 px-6 border-b">{machineId.objectname}</td>
+                  <td className="py-4 px-6 border-b">{machineId.icongroup}</td>
+                  <td className="py-4 px-6 border-b">{machineId.iconid}</td>
+                  <td className="py-4 px-6 border-b">{machineId.countryid}</td>
+                  <td className="py-4 px-6 border-b">{machineId.stateid}</td>
+                  <td className="py-4 px-6 border-b">{machineId.cityid}</td>
+                  <td className="py-4 px-6 border-b">{machineId.regionid}</td>
+                  <td className="py-4 px-6 border-b">{machineId.lat}</td>
+                  <td className="py-4 px-6 border-b">{machineId.long}</td>
+                  <td className="py-4 px-6 border-b">{machineId.active}</td>
+                  <td className="py-4 px-6 border-b">
                     <button
                       onClick={() => handleEditClick(machineId)}
-                      className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 hover:scale-105 transform duration-200"
+                      className="bg-[#f39512] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
                     >
                       Edit
                     </button>
@@ -203,36 +236,36 @@ const MachineIdData: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
 
-      {/* Pagination Controls */}
-      <div className="flex justify-center mt-4">
-        {Array.from({ length: totalPages }, (_, index) => (
-          <button
-            key={index + 1}
-            onClick={() => handlePageChange(index + 1)}
-            className={`mx-1 px-3 py-1 border rounded ${
-              currentPage === index + 1
-                ? "bg-gray-700 text-white"
-                : "bg-white text-gray-700 border-gray-300"
-            } hover:bg-gray-800 hover:text-white`}
-          >
-            {index + 1}
-          </button>
-        ))}
-      </div>
+        {/* Pagination Controls */}
+        <div className="flex justify-center mt-4">
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index + 1}
+              onClick={() => handlePageChange(index + 1)}
+              className={`mx-1 px-4 py-2 border rounded-lg ${
+                currentPage === index + 1
+                  ? "bg-[#385878] text-white"
+                  : "bg-white text-gray-700 border-gray-300"
+              } hover:bg-[#385878] hover:text-white`}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      </main>
 
-      {editModalOpen && selectedMachineId && (
-        <EditMachineIdModal
-          machineId={selectedMachineId}
-          onClose={() => setEditModalOpen(false)}
+      {modalOpen.add && (
+        <AddMachineIdModal
+          onClose={() => setModalOpen({ add: false, edit: false })}
           onUpdate={handleUpdate}
         />
       )}
-      {addModalOpen && (
-        <AddMachineIdModal
-          onClose={() => setAddModalOpen(false)}
-          onUpdate={() => fetchMachineIds} // Memastikan data diperbarui setelah modal ditutup
+      {modalOpen.edit && selectedMachineId && (
+        <EditMachineIdModal
+          machineId={selectedMachineId}
+          onClose={() => setModalOpen({ add: false, edit: false })}
+          onUpdate={handleUpdate}
         />
       )}
     </div>

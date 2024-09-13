@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils"; // Menggunakan enkripsi yang sama
+import { encryptMessage } from "../utils/encryptionUtils";
+import {
+  fetchMachineTypes,
+  fetchMachineGroups,
+  fetchMachineIds,
+} from "../utils/dropdownUtils";
+
+interface MachineDetail {
+  id: number;
+  objecttype: string;
+  objectgroup: string;
+  objectid: string;
+  objectcode: string;
+  objectname: string;
+  lat: string;
+  long: string;
+  active: string;
+}
 
 interface EditMachineDetailModalProps {
-  machineDetail: {
-    id: number;
-    objecttype_id: number;
-    objectgroup_id: number;
-    objectid_id: number;
-    objectcode: string;
-    objectname: string;
-    lat: string;
-    long: string;
-    active: string;
-  };
+  machineDetail: MachineDetail;
   onClose: () => void;
   onUpdate: () => void;
 }
@@ -23,58 +30,77 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
   onClose,
   onUpdate,
 }) => {
-  const [formData, setFormData] = useState(machineDetail);
-  const [machineTypes, setMachineTypes] = useState<any[]>([]);
-  const [machineGroups, setMachineGroups] = useState<any[]>([]);
-  const [filteredMachineGroups, setFilteredMachineGroups] = useState<any[]>([]);
-  const [machineIds, setMachineIds] = useState<any[]>([]);
-  const [filteredMachineIds, setFilteredMachineIds] = useState<any[]>([]);
-  const [originalJson, setOriginalJson] = useState<string | null>(null);
-  const [encryptedMessage, setEncryptedMessage] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    id: machineDetail.id,
+    objecttype: machineDetail.objecttype,
+    objectgroup: machineDetail.objectgroup,
+    objectid: machineDetail.objectid,
+    objectcode: machineDetail.objectcode,
+    objectname: machineDetail.objectname,
+    lat: machineDetail.lat,
+    long: machineDetail.long,
+    active: machineDetail.active,
+  });
+
+  const [machinetypes, setMachinetypes] = useState<
+    { id: number; objecttype: string }[]
+  >([]);
+  const [machinegroups, setMachinegroups] = useState<
+    { id: number; objecttype: string; objectgroup: string }[]
+  >([]);
+  const [filteredMachinegroups, setFilteredMachinegroups] = useState<
+    { id: number; objecttype: string; objectgroup: string }[]
+  >([]);
+  const [machineids, setMachineids] = useState<
+    { id: string; objectid: string; objectgroup: string }[]
+  >([]);
+  const [filteredMachineids, setFilteredMachineids] = useState<
+    { id: string; objectid: string }[]
+  >([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [typesResponse, groupsResponse, idsResponse] = await Promise.all([
-          axios.get("/api/machinetype"),
-          axios.get("/api/machinegroup"),
-          axios.get("/api/machineid"),
+        const [types, groups, ids] = await Promise.all([
+          fetchMachineTypes(),
+          fetchMachineGroups(),
+          fetchMachineIds(),
         ]);
-        setMachineTypes(typesResponse.data);
-        setMachineGroups(groupsResponse.data);
-        setMachineIds(idsResponse.data);
+        setMachinetypes(types);
+        setMachinegroups(groups);
+        setFilteredMachinegroups(
+          groups.filter(
+            (group) => group.objecttype === machineDetail.objecttype
+          )
+        );
+        setMachineids(ids);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
 
     fetchData();
-  }, []);
+  }, [machineDetail]);
 
   useEffect(() => {
-    if (formData.objecttype_id) {
-      const filteredGroups = machineGroups.filter(
-        (group) => group.objecttype_id === parseInt(formData.objecttype_id)
+    if (formData.objecttype) {
+      const filteredGroups = machinegroups.filter(
+        (group) => group.objecttype === formData.objecttype
       );
-      setFilteredMachineGroups(filteredGroups);
-      if (formData.objectgroup_id) {
-        const filteredIds = machineIds.filter(
-          (id) => id.objectgroup_id === parseInt(formData.objectgroup_id)
-        );
-        setFilteredMachineIds(filteredIds);
-      } else {
-        setFilteredMachineIds([]);
-      }
-    } else {
-      setFilteredMachineGroups([]);
-      setFilteredMachineIds([]);
+      setFilteredMachinegroups(filteredGroups);
     }
-  }, [
-    formData.objecttype_id,
-    formData.objectgroup_id,
-    machineGroups,
-    machineIds,
-  ]);
+  }, [formData.objecttype, machinegroups]);
+
+  useEffect(() => {
+    if (formData.objectgroup) {
+      const filteredIds = machineids.filter(
+        (id) => id.objectgroup === formData.objectgroup
+      );
+      setFilteredMachineids(filteredIds);
+    } else {
+      setFilteredMachineids([]);
+    }
+  }, [formData.objectgroup, machineids]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -88,7 +114,6 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Format JSON data yang akan dienkripsi
     const jsonData = {
       datacore: "MACHINE",
       folder: "MACHINEDETAIL",
@@ -96,52 +121,40 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
       group: "XCYTUA",
       property: "PJLBBS",
       record: {
-        objecttype_id: formData.objecttype_id,
-        objectgroup_id: formData.objectgroup_id,
-        objectid_id: formData.objectid_id,
+        objecttype: formData.objecttype,
+        objectgroup: formData.objectgroup,
+        objectid: formData.objectid,
         objectcode: formData.objectcode,
-        objectname: formData.objectname,
+        objectname: `'${formData.objectname}'`,
         lat: formData.lat,
         long: formData.long,
         active: formData.active,
       },
       condition: {
-        id: machineDetail.id,
+        id: {
+          operator: "eq",
+          value: formData.id,
+        },
       },
     };
 
-    // Pretty print JSON
     const jsonString = JSON.stringify(jsonData, null, 2);
-
-    // Encrypt JSON data
     const encryptedMessage = encryptMessage(jsonString);
 
-    // Payload yang akan dikirimkan ke backend
     const payload = {
       apikey: "06EAAA9D10BE3D4386D10144E267B681",
       uniqueid: "JFKlnUZyyu0MzRqj",
-      timestamp: new Date()
-        .toISOString()
-        .replace(/[-:.TZ]/g, "")
-        .slice(0, 14),
+      timestamp: new Date().toISOString(),
       localdb: "N",
       message: encryptedMessage,
     };
 
-    setOriginalJson(jsonString); // JSON asli sebelum enkripsi
-    setEncryptedMessage(JSON.stringify(payload, null, 2)); // Pretty printed encrypted payload
-
     try {
-      // PUT request ke backend
-      const response = await axios.put(
-        `/api/machinedetail/${machineDetail.id}`,
-        payload
-      );
-      // console.log("Response from backend:", response.data);
+      await axios.post(`/api`, payload);
 
-      alert("Machine detail updated successfully!");
-      onUpdate(); // Update list machine details
-      onClose(); // Close modal setelah update
+      alert("Machine Detail updated successfully!");
+      onUpdate();
+      onClose();
     } catch (error) {
       console.error("Error updating machine detail:", error);
     }
@@ -156,19 +169,18 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
       <div className="bg-white w-full max-w-2xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Edit Machine Detail</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Form Fields */}
           <div>
             <label className="block">Object Type</label>
             <select
-              name="objecttype_id"
-              value={formData.objecttype_id}
+              name="objecttype"
+              value={formData.objecttype}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
-              {machineTypes.map((type) => (
-                <option key={type.id} value={type.id}>
+              {machinetypes.map((type) => (
+                <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
               ))}
@@ -177,15 +189,15 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
           <div>
             <label className="block">Object Group</label>
             <select
-              name="objectgroup_id"
-              value={formData.objectgroup_id}
+              name="objectgroup"
+              value={formData.objectgroup}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Group</option>
-              {filteredMachineGroups.map((group) => (
-                <option key={group.id} value={group.id}>
+              {filteredMachinegroups.map((group) => (
+                <option key={group.id} value={group.objectgroup}>
                   {group.objectgroup}
                 </option>
               ))}
@@ -194,15 +206,15 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
           <div>
             <label className="block">Object ID</label>
             <select
-              name="objectid_id"
-              value={formData.objectid_id}
+              name="objectid"
+              value={formData.objectid}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object ID</option>
-              {filteredMachineIds.map((id) => (
-                <option key={id.id} value={id.id}>
+              {filteredMachineids.map((id) => (
+                <option key={id.id} value={id.objectid}>
                   {id.objectid}
                 </option>
               ))}
@@ -233,9 +245,8 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
           <div>
             <label className="block">Latitude</label>
             <input
+              type="text"
               name="lat"
-              type="number"
-              step="0.0000001"
               value={formData.lat}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
@@ -245,9 +256,8 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
           <div>
             <label className="block">Longitude</label>
             <input
+              type="text"
               name="long"
-              type="number"
-              step="0.0000001"
               value={formData.long}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
@@ -256,36 +266,23 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
           </div>
           <div>
             <label className="block">Active</label>
-            <div className="mt-1 flex space-x-4">
-              <label>
-                <input
-                  type="radio"
-                  name="active"
-                  value="Y"
-                  checked={formData.active === "Y"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                Yes
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="active"
-                  value="N"
-                  checked={formData.active === "N"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                No
-              </label>
-            </div>
+            <select
+              name="active"
+              value={formData.active}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            >
+              <option value="">Select Active Status</option>
+              <option value="Y">Yes</option>
+              <option value="N">No</option>
+            </select>
           </div>
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end mt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-300 rounded-md"
+              className="mr-2 px-4 py-2 bg-gray-300 rounded-md"
             >
               Cancel
             </button>
@@ -293,22 +290,10 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
               type="submit"
               className="px-4 py-2 bg-blue-500 text-white rounded-md"
             >
-              Save Changes
+              Update
             </button>
           </div>
         </form>
-        {originalJson && (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold">Original JSON Data:</h3>
-            <pre className="bg-gray-100 p-2 rounded">{originalJson}</pre>
-          </div>
-        )}
-        {encryptedMessage && (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold">Encrypted Payload:</h3>
-            <pre className="bg-gray-100 p-2 rounded">{encryptedMessage}</pre>
-          </div>
-        )}
       </div>
     </div>
   );

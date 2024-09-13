@@ -23,6 +23,7 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
   onUpdate,
 }) => {
   const [formData, setFormData] = useState({
+    id: machineGroup.id,
     objecttype: machineGroup.objecttype,
     objectgroup: machineGroup.objectgroup,
     description: machineGroup.description,
@@ -74,9 +75,9 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
         active: `'${formData.active}'`,
       },
       condition: {
-        objecttype: {
+        id: {
           operator: "eq",
-          value: formData.objecttype, // Menyesuaikan dengan objecttype yang dipilih
+          value: formData.id, // Menyesuaikan dengan objecttype yang dipilih
         },
       },
     };

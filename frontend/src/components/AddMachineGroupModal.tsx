@@ -67,7 +67,7 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
 
     // Encrypt the message
     const encryptedMessage = encryptMessage(message);
-
+    console.log(encryptedMessage);
     const payload = {
       apikey: "06EAAA9D10BE3D4386D10144E267B681",
       uniqueid: "JFKlnUZyyu0MzRqj",

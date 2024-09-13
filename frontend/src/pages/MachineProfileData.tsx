@@ -32,7 +32,6 @@ interface MachineProfile {
 }
 
 const columns = [
-  { key: "id", name: "ID" },
   { key: "objecttype", name: "Object Type" },
   { key: "objectgroup", name: "Object Group" },
   { key: "objectid", name: "Object ID" },
@@ -68,21 +67,20 @@ const MachineProfileData: React.FC = () => {
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const profilesPerPage = 10; // 10 data per halaman
+  const profilesPerPage = 5;
 
   useEffect(() => {
     fetchMachineProfiles();
   }, []);
 
   const fetchMachineProfiles = async () => {
-    // Menyiapkan data untuk POST
     const requestPayload = {
       datacore: "MACHINE",
       folder: "MACHINEPROFILE",
       command: "SELECT",
       group: "XCYTUA",
       property: "PJLBBS",
-      fields: "*", // Ambil semua field
+      fields: "*",
       pageno: "0",
       recordperpage: "20",
       condition: {
@@ -104,18 +102,15 @@ const MachineProfileData: React.FC = () => {
     };
 
     try {
-      // Mengirim request
       const response = await axios.post("/api", payload, {
         headers: {
           "Content-Type": "application/json",
         },
       });
 
-      // Dekripsi data yang diterima
       const decryptedMessage = decryptMessage(response.data.message);
       const result = JSON.parse(decryptedMessage);
 
-      // Pastikan data yang diterima adalah array
       if (Array.isArray(result.data)) {
         const sortedMachineProfiles = result.data.sort(
           (a: MachineProfile, b: MachineProfile) => a.id - b.id
@@ -131,6 +126,7 @@ const MachineProfileData: React.FC = () => {
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
+    setCurrentPage(1);
   };
 
   const handleEditClick = (machineProfile: MachineProfile) => {
@@ -164,49 +160,56 @@ const MachineProfileData: React.FC = () => {
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
-    <div className="container mx-auto mt-4 p-4">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-        <button
-          onClick={handleAddClick}
-          className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 hover:scale-105 transform duration-200"
-        >
-          Add Data
-        </button>
-        <input
-          type="text"
-          placeholder="Search object name..."
-          value={searchQuery}
-          onChange={handleSearch}
-          className="border border-gray-300 px-4 py-2 rounded shadow-sm w-full sm:w-1/3"
-        />
-      </div>
-      <div className="overflow-x-auto">
-        <div className="max-w-5xl overflow-x-auto">
-          <table className="min-w-max bg-white border border-gray-300 rounded-lg shadow-sm">
-            <thead className="bg-gray-100 border-b border-gray-300">
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded">
+      <header className="p-6 bg-[#385878] text-white">
+        <h1 className="text-3xl font-semibold">Machine Profile Data</h1>
+      </header>
+      <main className="flex flex-col flex-1 overflow-hidden p-6">
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={handleAddClick}
+            className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+          >
+            Add Data
+          </button>
+          <input
+            type="text"
+            placeholder="Search object name..."
+            value={searchQuery}
+            onChange={handleSearch}
+            className="border border-gray-300 px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-[#385878]"
+          />
+        </div>
+        <div className="flex-1 overflow-x-auto max-w">
+          <table className="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+            <thead className="bg-gray-100 text-gray-800 border-b">
               <tr>
+                <th className="py-4 px-6 text-left">No</th>
                 {columns.map((column) => (
-                  <th key={column.key} className="py-3 px-2 text-left">
+                  <th key={column.key} className="py-4 px-6 text-left">
                     <div className="flex items-center">
                       <span className="truncate">{column.name}</span>
                     </div>
                   </th>
                 ))}
-                <th className="py-3 px-2 text-left">Actions</th>
+                <th className="py-4 px-6 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {currentProfiles.map((profile) => (
-                <tr key={profile.id} className="hover:bg-gray-100">
+              {currentProfiles.map((profile, index) => (
+                <tr key={profile.id} className="hover:bg-[#3858780d]">
+                  <td className="py-4 px-6 border-b">
+                    {indexOfFirstProfile + index + 1}
+                  </td>
                   {columns.map((column) => (
-                    <td key={column.key} className="py-2 px-2 border-b">
+                    <td key={column.key} className="py-4 px-6 border-b">
                       {profile[column.key as keyof MachineProfile] || "-"}
                     </td>
                   ))}
-                  <td className="py-2 px-2 border-b">
+                  <td className="py-4 px-6 border-b">
                     <button
                       onClick={() => handleEditClick(profile)}
-                      className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 hover:scale-105 transform duration-200"
+                      className="bg-[#f39512] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
                     >
                       Edit
                     </button>
@@ -216,22 +219,24 @@ const MachineProfileData: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
 
-      {/* Pagination controls */}
-      <div className="flex justify-center mt-4">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <button
-            key={page}
-            onClick={() => paginate(page)}
-            className={`mx-1 px-3 py-1 border rounded ${
-              currentPage === page ? "bg-gray-800 text-white" : "bg-gray-200"
-            }`}
-          >
-            {page}
-          </button>
-        ))}
-      </div>
+        {/* Pagination */}
+        <div className="flex justify-center mt-6">
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index + 1}
+              onClick={() => paginate(index + 1)}
+              className={`mx-2 px-4 py-2 border rounded-lg ${
+                currentPage === index + 1
+                  ? "bg-[#385878] text-white"
+                  : "bg-white text-gray-700 border-gray-300"
+              } hover:bg-opacity-90 transform transition-all duration-200`}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      </main>
 
       {addModalOpen && (
         <AddMachineProfileModal

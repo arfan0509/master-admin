@@ -115,7 +115,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
         objectgroup: formData.objectgroup,
         objectid: formData.objectid,
         objectcode: formData.objectcode,
-        objectname: formData.objectname,
+        objectname: `'${formData.objectname}'`,
         lat: formData.lat,
         long: formData.long,
         active: formData.active,

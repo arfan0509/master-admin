@@ -50,9 +50,9 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
         active: `'${formData.active}'`, // Add single quotes around the value
       },
       condition: {
-        objecttype: {
+        id: {
           operator: "eq",
-          value: formData.objecttype,
+          value: machinetype.id, // Use ID for the condition
         },
       },
     };
@@ -74,10 +74,7 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
 
     try {
       // Send PUT request with encrypted payload
-      const response = await axios.post(
-        `/api`, // PUT request
-        payload
-      );
+      const response = await axios.post(`/api`, payload);
 
       alert("Machine type updated successfully!");
       onUpdate(); // Fetch and update the machine types list

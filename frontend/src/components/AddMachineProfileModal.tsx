@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils"; // Import encryption function
+import { encryptMessage } from "../utils/encryptionUtils";
+import {
+  fetchMachineTypes,
+  fetchMachineGroups,
+  fetchMachineIds,
+  fetchMachineDetails,
+} from "../utils/dropdownUtils";
 
 interface AddMachineProfileModalProps {
   onClose: () => void;
@@ -12,12 +18,12 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
   onUpdate,
 }) => {
   const [formData, setFormData] = useState({
-    objecttype_id: "",
-    objectgroup_id: "",
-    objectid_id: "",
-    objectcode_id: "",
-    objectname: "",
+    objecttype: "",
+    objectgroup: "",
+    objectid: "",
+    objectcode: "",
     objectstatus: "",
+    objectname: "",
     description: "",
     registereddate: "",
     registeredno: "",
@@ -26,7 +32,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
     dob: "",
     sex: "",
     documentno: "",
-    vendor_id: "",
+    vendor: "",
     notes: "",
     photogalery_1: "",
     photogalery_2: "",
@@ -34,36 +40,31 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
     photogalery_4: "",
     photogalery_5: "",
     video: "",
-    active: "",
+    active: "Y",
   });
 
-  const [objecttypes, setObjecttypes] = useState<any[]>([]);
-  const [objectgroups, setObjectgroups] = useState<any[]>([]);
-  const [filteredObjectgroups, setFilteredObjectgroups] = useState<any[]>([]);
-  const [objectids, setObjectids] = useState<any[]>([]);
-  const [filteredObjectids, setFilteredObjectids] = useState<any[]>([]);
-  const [objectcodes, setObjectcodes] = useState<any[]>([]);
-  const [filteredObjectcodes, setFilteredObjectcodes] = useState<any[]>([]);
-  const [vendors, setVendors] = useState<any[]>([]);
-  const [objectname, setObjectname] = useState("");
+  const [machineTypes, setMachineTypes] = useState<any[]>([]);
+  const [machineGroups, setMachineGroups] = useState<any[]>([]);
+  const [machineIds, setMachineIds] = useState<any[]>([]);
+  const [objectCodes, setObjectCodes] = useState<any[]>([]);
+  const [filteredMachineGroups, setFilteredMachineGroups] = useState<any[]>([]);
+  const [filteredMachineIds, setFilteredMachineIds] = useState<any[]>([]);
+  const [filteredObjectCodes, setFilteredObjectCodes] = useState<any[]>([]);
 
+  // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [typesRes, groupsRes, idsRes, codesRes, vendorsRes] =
-          await Promise.all([
-            axios.get("/api/machinetype"),
-            axios.get("/api/machinegroup"),
-            axios.get("/api/machineid"),
-            axios.get("/api/machinedetail"),
-            axios.get("/api/vendors"),
-          ]);
-
-        setObjecttypes(typesRes.data);
-        setObjectgroups(groupsRes.data);
-        setObjectids(idsRes.data);
-        setObjectcodes(codesRes.data);
-        setVendors(vendorsRes.data);
+        const [types, groups, ids, codes] = await Promise.all([
+          fetchMachineTypes(),
+          fetchMachineGroups(),
+          fetchMachineIds(),
+          fetchMachineDetails(),
+        ]);
+        setMachineTypes(types);
+        setMachineGroups(groups);
+        setMachineIds(ids);
+        setObjectCodes(codes);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -72,96 +73,144 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
     fetchData();
   }, []);
 
+  // Filter machine groups based on selected object type
   useEffect(() => {
-    if (formData.objecttype_id) {
-      const filteredGroups = objectgroups.filter(
-        (group) => group.objecttype_id === parseInt(formData.objecttype_id)
+    if (formData.objecttype) {
+      const filteredGroups = machineGroups.filter(
+        (group) => group.objecttype === formData.objecttype
       );
-      setFilteredObjectgroups(filteredGroups);
+      setFilteredMachineGroups(filteredGroups);
+      setFormData((prev) => ({
+        ...prev,
+        objectgroup: "",
+        objectid: "",
+        objectcode: "",
+      }));
     } else {
-      setFilteredObjectgroups([]);
+      setFilteredMachineGroups([]);
     }
-  }, [formData.objecttype_id, objectgroups]);
+  }, [formData.objecttype, machineGroups]);
 
+  // Filter machine IDs based on selected object group
   useEffect(() => {
-    if (formData.objectgroup_id) {
-      const filteredIds = objectids.filter(
-        (id) => id.objectgroup_id === parseInt(formData.objectgroup_id)
+    if (formData.objectgroup) {
+      const filteredIds = machineIds.filter(
+        (id) => id.objectgroup === formData.objectgroup
       );
-      setFilteredObjectids(filteredIds);
+      setFilteredMachineIds(filteredIds);
+      setFormData((prev) => ({ ...prev, objectid: "", objectcode: "" }));
     } else {
-      setFilteredObjectids([]);
+      setFilteredMachineIds([]);
     }
-  }, [formData.objectgroup_id, objectids]);
+  }, [formData.objectgroup, machineIds]);
 
+  // Filter object codes based on selected object ID
   useEffect(() => {
-    if (formData.objectid_id) {
-      const filteredCodes = objectcodes.filter(
-        (code) => code.objectid_id === parseInt(formData.objectid_id)
+    if (formData.objectid) {
+      const filteredCodes = objectCodes.filter(
+        (code) => code.objectid === formData.objectid
       );
-      setFilteredObjectcodes(filteredCodes);
+      setFilteredObjectCodes(filteredCodes);
     } else {
-      setFilteredObjectcodes([]);
+      setFilteredObjectCodes([]);
+      setFormData((prev) => ({ ...prev, objectcode: "" }));
     }
-  }, [formData.objectid_id, objectcodes]);
+  }, [formData.objectid, objectCodes]);
 
-  useEffect(() => {
-    const fetchObjectName = async () => {
-      if (formData.objectcode_id) {
-        try {
-          const response = await axios.get(
-            `/api/machinedetail/${formData.objectcode_id}`
-          );
-          const fetchedObjectName = response.data.objectname;
-          setObjectname(fetchedObjectName);
-          setFormData((prevData) => ({
-            ...prevData,
-            objectname: fetchedObjectName,
-          }));
-        } catch (error) {
-          console.error("Error fetching object name:", error);
-        }
-      }
-    };
+  const fetchObjectDetailsByCode = async (objectcode: string) => {
+    try {
+      const machineDetails = await fetchMachineDetails();
+      const detail = machineDetails.find(
+        (item) => item.objectcode === objectcode
+      );
+      return detail ? detail.objectname : "";
+    } catch (error) {
+      console.error("Error fetching object details:", error);
+      return "";
+    }
+  };
 
-    fetchObjectName();
-  }, [formData.objectcode_id]);
-
-  const handleChange = (
+  const handleChange = async (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "objectcode" && value) {
+      const objectname = await fetchObjectDetailsByCode(value);
+      setFormData((prev) => ({ ...prev, objectname }));
+    }
+  };
+
+  const formatDate = (date: string, format: string): string => {
+    const d = new Date(date);
+
+    // Format untuk registereddate
+    if (format === "registereddate") {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `'${year}/${month}/${day}'`;
+    }
+
+    // Format untuk dob
+    if (format === "dob") {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const hours = String(d.getHours()).padStart(2, "0");
+      const minutes = String(d.getMinutes()).padStart(2, "0");
+      const seconds = String(d.getSeconds()).padStart(2, "0");
+      return `'${year}-${month}-${day} ${hours}:${minutes}:${seconds}.0'`;
+    }
+
+    return date;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const formattedDOB = formData.dob
-      ? new Date(formData.dob).toISOString().slice(0, 10)
-      : "";
-
-    // Format data
-    const message = JSON.stringify(
-      {
-        datacore: "MACHINE",
-        folder: "MACHINEPROFILE",
-        command: "INSERT",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          ...formData,
-          dob: formattedDOB,
-        },
+    // Format data untuk dikirim
+    // Format the data to be sent
+    const jsonData = {
+      datacore: "MACHINE",
+      folder: "MACHINEPROFILE",
+      command: "INSERT",
+      group: "XCYTUA",
+      property: "PJLBBS",
+      record: {
+        objecttype: formData.objecttype,
+        objectgroup: formData.objectgroup,
+        objectid: formData.objectid,
+        objectcode: formData.objectcode,
+        objectstatus: formData.objectstatus,
+        objectname: `'${formData.objectname}'`,
+        description: `'${formData.description}'`,
+        registereddate: formatDate(formData.registereddate, "registereddate"),
+        registeredno: `'${formData.registeredno}'`,
+        registeredby: `'${formData.registeredby}'`,
+        countryoforigin: `'${formData.countryoforigin}'`,
+        dob: formatDate(formData.dob, "dob"),
+        sex: `'${formData.sex}'`,
+        documentno: `'${formData.documentno}'`,
+        vendor: `'${formData.vendor}'`,
+        notes: `'${formData.notes}'`,
+        photogalery_1: `'${formData.photogalery_1}'`,
+        photogalery_2: `'${formData.photogalery_2}'`,
+        photogalery_3: `'${formData.photogalery_3}'`,
+        photogalery_4: `'${formData.photogalery_4}'`,
+        photogalery_5: `'${formData.photogalery_5}'`,
+        video: `'${formData.video}'`,
+        active: formData.active,
       },
-      null,
-      2
-    );
+    };
 
-    // Encrypt the message
-    const encryptedMessage = encryptMessage(message);
+    // Convert JSON data to pretty-printed string
+    const jsonString = JSON.stringify(jsonData, null, 2);
+
+    // Encrypt JSON data
+    const encryptedMessage = encryptMessage(jsonString);
 
     // Prepare payload
     const payload = {
@@ -172,13 +221,17 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
       message: encryptedMessage,
     };
 
+    // Log JSON and encrypted payload
+    // console.log("Original JSON Data:", jsonString);
+    // console.log("Encrypted Payload:", JSON.stringify(payload, null, 2));
+
     try {
-      const response = await axios.post("/api/machineprofile", payload);
-      // console.log("Response from backend:", response.data);
+      // Send POST request with encrypted payload
+      const response = await axios.post("/api", payload);
 
       alert("Machine profile created successfully!");
-      onUpdate(); // Update the machine profiles list
-      onClose(); // Close the modal
+      onUpdate();
+      onClose();
     } catch (error) {
       console.error("Error creating machine profile:", error);
     }
@@ -194,97 +247,107 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
         <h2 className="text-xl font-bold mb-4">Add Machine Profile</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Object Type
-            </label>
+            <label className="block">Object Type</label>
             <select
-              name="objecttype_id"
-              value={formData.objecttype_id}
+              name="objecttype"
+              value={formData.objecttype}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
-              {objecttypes.map((type) => (
-                <option key={type.id} value={type.id}>
+              {machineTypes.map((type: any) => (
+                <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
               ))}
             </select>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Object Group
-            </label>
+            <label className="block">Object Group</label>
             <select
-              name="objectgroup_id"
-              value={formData.objectgroup_id}
+              name="objectgroup"
+              value={formData.objectgroup}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              disabled={!formData.objecttype}
             >
               <option value="">Select Object Group</option>
-              {filteredObjectgroups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.objectgroup}
-                </option>
-              ))}
+              {filteredMachineGroups.length > 0 ? (
+                filteredMachineGroups.map((group: any) => (
+                  <option key={group.id} value={group.objectgroup}>
+                    {group.objectgroup}
+                  </option>
+                ))
+              ) : (
+                <option value="">No available options</option>
+              )}
             </select>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Object ID
-            </label>
+            <label className="block">Object ID</label>
             <select
-              name="objectid_id"
-              value={formData.objectid_id}
+              name="objectid"
+              value={formData.objectid}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              disabled={!formData.objectgroup}
             >
               <option value="">Select Object ID</option>
-              {filteredObjectids.map((id) => (
-                <option key={id.id} value={id.id}>
-                  {id.objectid}
-                </option>
-              ))}
+              {filteredMachineIds.length > 0 ? (
+                filteredMachineIds.map((id: any) => (
+                  <option key={id.objectid} value={id.objectid}>
+                    {id.objectid}
+                  </option>
+                ))
+              ) : (
+                <option value="">No available options</option>
+              )}
             </select>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Object Code
-            </label>
+            <label className="block">Object Code</label>
             <select
-              name="objectcode_id"
-              value={formData.objectcode_id}
+              name="objectcode"
+              value={formData.objectcode}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              disabled={!formData.objectid}
             >
               <option value="">Select Object Code</option>
-              {filteredObjectcodes.map((code) => (
-                <option key={code.id} value={code.id}>
-                  {code.objectcode}
-                </option>
-              ))}
+              {filteredObjectCodes.length > 0 ? (
+                filteredObjectCodes.map((code: any) => (
+                  <option key={code.objectcode} value={code.objectcode}>
+                    {code.objectcode}
+                  </option>
+                ))
+              ) : (
+                <option value="">No available options</option>
+              )}
             </select>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Object Name
-            </label>
+            <label className="block">Object Name</label>
             <input
               type="text"
               name="objectname"
-              value={objectname}
-              readOnly
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100"
+              value={formData.objectname}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+              readOnly // Set readOnly jika Anda hanya ingin menampilkan data, tidak bisa diedit langsung
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Object Status
-            </label>
+            <label className="block">Object Status</label>
             <input
               type="text"
               name="objectstatus"
@@ -293,22 +356,20 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
+            <label className="block">Description</label>
+            <input
+              type="text"
               name="description"
               value={formData.description}
               onChange={handleChange}
-              rows={3}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Registered Date
-            </label>
+            <label className="block">Registered Date</label>
             <input
               type="date"
               name="registereddate"
@@ -317,10 +378,9 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Registered No
-            </label>
+            <label className="block">Registered No</label>
             <input
               type="text"
               name="registeredno"
@@ -329,10 +389,9 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Registered By
-            </label>
+            <label className="block">Registered By</label>
             <input
               type="text"
               name="registeredby"
@@ -341,10 +400,9 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Country of Origin
-            </label>
+            <label className="block">Country of Origin</label>
             <input
               type="text"
               name="countryoforigin"
@@ -353,34 +411,34 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Date of Birth
-            </label>
+            <label className="block">Date of Birth</label>
             <input
-              type="date"
+              type="datetime-local"
               name="dob"
               value={formData.dob}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Sex
-            </label>
-            <input
-              type="text"
+            <label className="block">Sex</label>
+            <select
               name="sex"
               value={formData.sex}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
+            >
+              <option value="">Select Sex</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Document No
-            </label>
+            <label className="block">Document No</label>
             <input
               type="text"
               name="documentno"
@@ -389,41 +447,30 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Vendor
-            </label>
-            <select
-              name="vendor_id"
-              value={formData.vendor_id}
+            <label className="block">Vendor</label>
+            <input
+              type="text"
+              name="vendor"
+              value={formData.vendor}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              required
-            >
-              <option value="">Select Vendor</option>
-              {vendors.map((vendor) => (
-                <option key={vendor.id} value={vendor.id}>
-                  {vendor.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Notes
-            </label>
+            <label className="block">Notes</label>
             <textarea
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              rows={3}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Photo Gallery 1
-            </label>
+            <label className="block">Photo Gallery 1</label>
             <input
               type="text"
               name="photogalery_1"
@@ -432,10 +479,9 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Photo Gallery 2
-            </label>
+            <label className="block">Photo Gallery 2</label>
             <input
               type="text"
               name="photogalery_2"
@@ -444,10 +490,9 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Photo Gallery 3
-            </label>
+            <label className="block">Photo Gallery 3</label>
             <input
               type="text"
               name="photogalery_3"
@@ -456,10 +501,9 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Photo Gallery 4
-            </label>
+            <label className="block">Photo Gallery 4</label>
             <input
               type="text"
               name="photogalery_4"
@@ -468,10 +512,9 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Photo Gallery 5
-            </label>
+            <label className="block">Photo Gallery 5</label>
             <input
               type="text"
               name="photogalery_5"
@@ -480,10 +523,9 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Video
-            </label>
+            <label className="block">Video</label>
             <input
               type="text"
               name="video"
@@ -492,35 +534,13 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Active
-            </label>
-            <select
-              name="active"
-              value={formData.active}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              required
-            >
-              <option value="">Select Status</option>
-              <option value="Y">Yes</option>
-              <option value="N">No</option>
-            </select>
-          </div>
+
           <div className="flex justify-end">
             <button
-              type="button"
-              onClick={onClose}
-              className="bg-gray-500 text-white px-4 py-2 rounded-md mr-2"
-            >
-              Close
-            </button>
-            <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded-md"
+              className="bg-blue-500 text-white px-4 py-2 rounded-md shadow-sm hover:bg-blue-600"
             >
-              Save
+              Submit
             </button>
           </div>
         </form>
