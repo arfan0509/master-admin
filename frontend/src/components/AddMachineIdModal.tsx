@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { encryptMessage } from "../utils/encryptionUtils";
 import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
+import MapLocationModal from "./MapLocationModal"; // Import MapLocationModal
+import CountrySelectModal from "./CountrySelectModal"; // Import modal pemilihan negara
+import { MapPin } from "@phosphor-icons/react";
+import { countries } from "../utils/countries";
 
 interface MachineType {
   id: number;
@@ -44,6 +48,8 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
   const [filteredMachinegroups, setFilteredMachinegroups] = useState<
     MachineGroup[]
   >([]);
+  const [showMapModal, setShowMapModal] = useState(false); // State for MapLocationModal
+  const [showCountryModal, setShowCountryModal] = useState(false); // State for CountrySelectModal
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,12 +70,10 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
 
   useEffect(() => {
     if (formData.objecttype) {
-      // Filter machine groups based on selected object type
       const filteredGroups = machinegroups.filter(
         (group) => group.objecttype === formData.objecttype
       );
       setFilteredMachinegroups(filteredGroups);
-      // Reset objectgroup if it no longer matches filtered groups
       if (
         !filteredGroups.find(
           (group) => group.objectgroup === formData.objectgroup
@@ -92,10 +96,17 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
     });
   };
 
+  const handleCountrySelect = (country: { code: string; name: string }) => {
+    setFormData((prev) => ({
+      ...prev,
+      countryid: country.code, // Update countryid dengan kode negara yang dipilih
+    }));
+    setShowCountryModal(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Format JSON message
     const message = JSON.stringify({
       datacore: "MACHINE",
       folder: "MACHINEID",
@@ -119,7 +130,6 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
       },
     });
 
-    // Encrypt the message
     const encryptedMessage = encryptMessage(message);
 
     const payload = {
@@ -139,8 +149,8 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
 
       if (response.status === 200 || response.status === 201) {
         console.log("Machine ID created successfully!");
-        onUpdate(); // Inform the parent component to update data
-        onClose(); // Close the modal
+        onUpdate();
+        onClose();
       } else {
         console.error("Unexpected response status:", response.status);
         console.error("Response data:", response.data);
@@ -148,6 +158,15 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
     } catch (error) {
       console.error("Error creating Machine ID:", error);
     }
+  };
+
+  const handleLocationSelect = (lat: number, long: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      lat: lat.toString(),
+      long: long.toString(),
+    }));
+    setShowMapModal(false);
   };
 
   return (
@@ -239,14 +258,20 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
           </div>
           <div>
             <label className="block">Country</label>
-            <input
-              type="text"
+            <select
               name="countryid"
               value={formData.countryid}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
-            />
+            >
+              <option value="">Select Country</option>
+              {countries.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block">State</label>
@@ -272,69 +297,106 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
           </div>
           <div>
             <label className="block">Region</label>
-            <input
-              type="text"
+            <select
               name="regionid"
               value={formData.regionid}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
-            />
+            >
+              <option value="">Select Region</option>
+              {countries.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block">Latitude</label>
-            <input
-              name="lat"
-              type="number"
-              step="0.0000001"
-              value={formData.lat}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              required
-            />
+            <div className="flex items-center">
+              <input
+                name="lat"
+                type="text"
+                value={formData.lat}
+                readOnly
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowMapModal(true)}
+                className="ml-2 p-[6.5px] bg-[#385878] text-white hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200 flex items-center rounded-md"
+              >
+                <MapPin size={24} /> {/* Ikon hanya */}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block">Longitude</label>
             <input
               name="long"
-              type="number"
-              step="0.0000001"
+              type="text"
               value={formData.long}
-              onChange={handleChange}
+              readOnly
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              required
             />
           </div>
           <div>
             <label className="block">Active</label>
-            <select
-              name="active"
-              value={formData.active}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              required
-            >
-              <option value="Y">Yes</option>
-              <option value="N">No</option>
-            </select>
+            <div className="flex space-x-4 mt-1">
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name="active"
+                  value="Y"
+                  checked={formData.active === "Y"}
+                  onChange={handleChange}
+                  className="form-radio"
+                />
+                <span className="ml-2">Yes</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name="active"
+                  value="N"
+                  checked={formData.active === "N"}
+                  onChange={handleChange}
+                  className="form-radio"
+                />
+                <span className="ml-2">No</span>
+              </label>
+            </div>
           </div>
           <div className="flex justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="mr-2 px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-200"
+              className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-blue-600 text-white"
+              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Submit
             </button>
           </div>
         </form>
       </div>
+      {showMapModal && (
+        <MapLocationModal
+          onClose={() => setShowMapModal(false)}
+          onLocationSelect={handleLocationSelect}
+        />
+      )}
+      {showCountryModal && (
+        <CountrySelectModal
+          onClose={() => setShowCountryModal(false)}
+          onCountrySelect={handleCountrySelect} // Pass handler to the modal
+        />
+      )}
     </div>
   );
 };

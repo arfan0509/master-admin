@@ -7,6 +7,7 @@ import {
   fetchMachineIds,
   fetchMachineDetails,
 } from "../utils/dropdownUtils";
+import { countries } from "../utils/countries";
 
 interface MachineProfile {
   id: number;
@@ -89,7 +90,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
     { id: string; objectid: string }[]
   >([]);
   const [objectCodes, setObjectCodes] = useState<
-    { id: string; objectcode: string; objectid: string }[]
+    { id: string; objectcode: string; objectid: string; objectname: string }[]
   >([]);
   const [filteredObjectCodes, setFilteredObjectCodes] = useState<
     { id: string; objectcode: string }[]
@@ -147,6 +148,19 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
     }
   }, [formData.objectid, objectCodes]);
 
+  // Update objectname when objectcode changes
+  useEffect(() => {
+    const selectedCode = objectCodes.find(
+      (code) => code.objectcode === formData.objectcode
+    );
+    if (selectedCode) {
+      setFormData((prevData) => ({
+        ...prevData,
+        objectname: selectedCode.objectname,
+      }));
+    }
+  }, [formData.objectcode, objectCodes]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -159,7 +173,6 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
   const formatDate = (date: string, format: string): string => {
     const d = new Date(date);
 
-    // Format untuk registereddate
     if (format === "registereddate") {
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -167,7 +180,6 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
       return `'${year}/${month}/${day}'`;
     }
 
-    // Format untuk dob
     if (format === "dob") {
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -236,7 +248,6 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
 
     try {
       await axios.post("/api", payload);
-      alert("Machine Profile updated successfully!");
       onUpdate();
       onClose();
     } catch (error) {
@@ -390,13 +401,20 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
 
           <div>
             <label className="block">Country of Origin</label>
-            <input
-              type="text"
+            <select
               name="countryoforigin"
               value={formData.countryoforigin}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
+              required
+            >
+              <option value="">Select Country</option>
+              {countries.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -536,19 +554,19 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               <option value="N">No</option>
             </select>
           </div>
-          <div className="flex justify-end mt-4">
-            <button
-              type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded-md"
-            >
-              Save
-            </button>
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="ml-2 bg-gray-300 px-4 py-2 rounded-md"
+              className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+            >
+              Update
             </button>
           </div>
         </form>

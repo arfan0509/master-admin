@@ -136,19 +136,21 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
               </label>
             </div>
           </div>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded-md"
-          >
-            Submit
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md ml-2"
-          >
-            Cancel
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+            >
+              Update
+            </button>
+          </div>
         </form>
       </div>
     </div>

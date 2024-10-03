@@ -7,6 +7,7 @@ import {
   fetchMachineIds,
   fetchMachineDetails,
 } from "../utils/dropdownUtils";
+import { countries } from "../utils/countries";
 
 interface AddMachineProfileModalProps {
   onClose: () => void;
@@ -403,13 +404,20 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
 
           <div>
             <label className="block">Country of Origin</label>
-            <input
-              type="text"
+            <select
               name="countryoforigin"
               value={formData.countryoforigin}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
+              required
+            >
+              <option value="">Select Country</option>
+              {countries.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -537,8 +545,15 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
 
           <div className="flex justify-end">
             <button
+              type="button"
+              onClick={onClose}
+              className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+            >
+              Cancel
+            </button>
+            <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded-md shadow-sm hover:bg-blue-600"
+              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Submit
             </button>

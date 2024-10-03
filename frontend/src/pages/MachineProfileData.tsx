@@ -20,7 +20,7 @@ interface MachineProfile {
   dob: string;
   sex: string;
   documentno: string;
-  vendor_name: string;
+  vendor: string;
   notes: string;
   photogalery_1: string;
   photogalery_2: string;
@@ -46,7 +46,7 @@ const columns = [
   { key: "dob", name: "DOB" },
   { key: "sex", name: "Sex" },
   { key: "documentno", name: "Document No" },
-  { key: "vendor_name", name: "Vendor" },
+  { key: "vendor", name: "Vendor" },
   { key: "notes", name: "Notes" },
   { key: "photogalery_1", name: "Photo Gallery 1" },
   { key: "photogalery_2", name: "Photo Gallery 2" },
@@ -82,7 +82,7 @@ const MachineProfileData: React.FC = () => {
       property: "PJLBBS",
       fields: "*",
       pageno: "0",
-      recordperpage: "20",
+      recordperpage: "9999999999",
       condition: {
         active: {
           operator: "eq",
@@ -140,27 +140,28 @@ const MachineProfileData: React.FC = () => {
 
   const handleUpdate = () => {
     fetchMachineProfiles();
+    setAddModalOpen(false);
+    setEditModalOpen(false);
   };
 
   // Pagination logic
   const indexOfLastProfile = currentPage * profilesPerPage;
   const indexOfFirstProfile = indexOfLastProfile - profilesPerPage;
-  const currentProfiles = machineProfiles
-    .filter((profile) =>
-      profile.objectname.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .slice(indexOfFirstProfile, indexOfLastProfile);
-
-  const totalPages = Math.ceil(
-    machineProfiles.filter((profile) =>
-      profile.objectname.toLowerCase().includes(searchQuery.toLowerCase())
-    ).length / profilesPerPage
+  const filteredProfiles = machineProfiles.filter((profile) =>
+    profile.objectname.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const currentProfiles = filteredProfiles.slice(indexOfFirstProfile, indexOfLastProfile);
 
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const totalPages = Math.ceil(filteredProfiles.length / profilesPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded">
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300 max-w-[1200px]">
       <header className="p-6 bg-[#385878] text-white">
         <h1 className="text-3xl font-semibold">Machine Profile Data</h1>
       </header>
@@ -180,7 +181,7 @@ const MachineProfileData: React.FC = () => {
             className="border border-gray-300 px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-[#385878]"
           />
         </div>
-        <div className="flex-1 overflow-x-auto max-w">
+        <div className="flex-1 overflow-x-auto">
           <table className="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
             <thead className="bg-gray-100 text-gray-800 border-b">
               <tr>
@@ -198,9 +199,7 @@ const MachineProfileData: React.FC = () => {
             <tbody>
               {currentProfiles.map((profile, index) => (
                 <tr key={profile.id} className="hover:bg-[#3858780d]">
-                  <td className="py-4 px-6 border-b">
-                    {indexOfFirstProfile + index + 1}
-                  </td>
+                  <td className="py-4 px-6 border-b">{indexOfFirstProfile + index + 1}</td>
                   {columns.map((column) => (
                     <td key={column.key} className="py-4 px-6 border-b">
                       {profile[column.key as keyof MachineProfile] || "-"}
@@ -209,7 +208,7 @@ const MachineProfileData: React.FC = () => {
                   <td className="py-4 px-6 border-b">
                     <button
                       onClick={() => handleEditClick(profile)}
-                      className="bg-[#f39512] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+                      className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
                     >
                       Edit
                     </button>
@@ -220,21 +219,52 @@ const MachineProfileData: React.FC = () => {
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Controls */}
         <div className="flex justify-center mt-6">
-          {Array.from({ length: totalPages }, (_, index) => (
-            <button
-              key={index + 1}
-              onClick={() => paginate(index + 1)}
-              className={`mx-2 px-4 py-2 border rounded-lg ${
-                currentPage === index + 1
-                  ? "bg-[#385878] text-white"
-                  : "bg-white text-gray-700 border-gray-300"
-              } hover:bg-opacity-90 transform transition-all duration-200`}
-            >
-              {index + 1}
-            </button>
-          ))}
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`mx-1 px-3 py-1 ${
+              currentPage === 1
+                ? "opacity-50 cursor-not-allowed"
+                : "text-gray-700 hover:text-[#385878]"
+            }`}
+          >
+            &lt;
+          </button>
+
+          {Array.from({ length: totalPages }, (_, index) => {
+            const pageNumber = index + 1;
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => handlePageChange(pageNumber)}
+                className={`mx-1 px-3 py-1 transition-colors duration-200 ${
+                  currentPage === pageNumber
+                    ? "text-white bg-[#385878] rounded-full"
+                    : "text-gray-700 hover:text-white hover:bg-[#385878] rounded-full"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
+
+          {totalPages > 4 && currentPage < totalPages - 2 && (
+            <span className="mx-1 text-gray-700">...</span>
+          )}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`mx-1 px-3 py-1 ${
+              currentPage === totalPages
+                ? "opacity-50 cursor-not-allowed"
+                : "text-gray-700 hover:text-[#385878]"
+            }`}
+          >
+            &gt;
+          </button>
         </div>
       </main>
 

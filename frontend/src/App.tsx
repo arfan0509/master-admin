@@ -11,9 +11,10 @@ import MachineProfileData from "./pages/MachineProfileData";
 function App() {
   return (
     <Router>
-      <div className="flex">
+      <div className="flex relative">
         <Sidebar />
-        <div className="p-10 w-full">
+        <div className="p-6 w-full ml-20 transition-all duration-300 ease-in-out">
+          {/* Ensure margin-left adjusts with sidebar width */}
           <Routes>
             <Route path="/machinetype" element={<MachineTypeData />} />
             <Route path="/machinegroup" element={<MachineGroupData />} />

@@ -11,7 +11,7 @@ const fetchDropdownData = async (folder: string, fields: string, condition: any)
     property: "PJLBBS",
     fields,
     pageno: "0",
-    recordperpage: "20",
+    recordperpage: "9999999999",
     condition,
   };
 
@@ -71,7 +71,7 @@ export const fetchMachineGroups = async (): Promise<any[]> => {
 export const fetchMachineIds = async (): Promise<any[]> => {
   return fetchDropdownData(
     "MACHINEID",
-    "id, objecttype, objectgroup, objectid, objectname, active",
+    "id, objecttype, objectgroup, objectid, objectname, active, lat, long",
     {
       active: {
         operator: "eq",

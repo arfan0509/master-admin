@@ -42,21 +42,11 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
     active: machineDetail.active,
   });
 
-  const [machinetypes, setMachinetypes] = useState<
-    { id: number; objecttype: string }[]
-  >([]);
-  const [machinegroups, setMachinegroups] = useState<
-    { id: number; objecttype: string; objectgroup: string }[]
-  >([]);
-  const [filteredMachinegroups, setFilteredMachinegroups] = useState<
-    { id: number; objecttype: string; objectgroup: string }[]
-  >([]);
-  const [machineids, setMachineids] = useState<
-    { id: string; objectid: string; objectgroup: string }[]
-  >([]);
-  const [filteredMachineids, setFilteredMachineids] = useState<
-    { id: string; objectid: string }[]
-  >([]);
+  const [machinetypes, setMachinetypes] = useState<{ id: number; objecttype: string }[]>([]);
+  const [machinegroups, setMachinegroups] = useState<{ id: number; objecttype: string; objectgroup: string }[]>([]);
+  const [filteredMachinegroups, setFilteredMachinegroups] = useState<{ id: number; objecttype: string; objectgroup: string }[]>([]);
+  const [machineids, setMachineids] = useState<{ id: string; objectid: string; objectgroup: string; lat: string; long: string }[]>([]);
+  const [filteredMachineids, setFilteredMachineids] = useState<{ id: string; objectid: string; lat: string; long: string }[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,11 +58,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
         ]);
         setMachinetypes(types);
         setMachinegroups(groups);
-        setFilteredMachinegroups(
-          groups.filter(
-            (group) => group.objecttype === machineDetail.objecttype
-          )
-        );
+        setFilteredMachinegroups(groups.filter(group => group.objecttype === machineDetail.objecttype));
         setMachineids(ids);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -84,31 +70,40 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
 
   useEffect(() => {
     if (formData.objecttype) {
-      const filteredGroups = machinegroups.filter(
-        (group) => group.objecttype === formData.objecttype
-      );
+      const filteredGroups = machinegroups.filter(group => group.objecttype === formData.objecttype);
       setFilteredMachinegroups(filteredGroups);
     }
   }, [formData.objecttype, machinegroups]);
 
   useEffect(() => {
     if (formData.objectgroup) {
-      const filteredIds = machineids.filter(
-        (id) => id.objectgroup === formData.objectgroup
-      );
+      const filteredIds = machineids.filter(id => id.objectgroup === formData.objectgroup);
       setFilteredMachineids(filteredIds);
     } else {
       setFilteredMachineids([]);
     }
   }, [formData.objectgroup, machineids]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Jika field yang diubah adalah objectid
+    if (name === "objectid" && value) {
+      const selectedMachine = filteredMachineids.find(id => id.objectid === value);
+      if (selectedMachine) {
+        const { lat, long } = selectedMachine; // Ambil lat dan long dari objek yang dipilih
+        setFormData(prev => ({
+          ...prev,
+          lat,
+          long,
+        }));
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -162,10 +157,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div
-        className="fixed inset-0 bg-black opacity-50"
-        onClick={onClose}
-      ></div>
+      <div className="fixed inset-0 bg-black opacity-50" onClick={onClose}></div>
       <div className="bg-white w-full max-w-2xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Edit Machine Detail</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -179,7 +171,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
               required
             >
               <option value="">Select Object Type</option>
-              {machinetypes.map((type) => (
+              {machinetypes.map(type => (
                 <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
@@ -196,7 +188,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
               required
             >
               <option value="">Select Object Group</option>
-              {filteredMachinegroups.map((group) => (
+              {filteredMachinegroups.map(group => (
                 <option key={group.id} value={group.objectgroup}>
                   {group.objectgroup}
                 </option>
@@ -213,7 +205,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
               required
             >
               <option value="">Select Object ID</option>
-              {filteredMachineids.map((id) => (
+              {filteredMachineids.map(id => (
                 <option key={id.id} value={id.objectid}>
                   {id.objectid}
                 </option>
@@ -251,6 +243,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              readOnly
             />
           </div>
           <div>
@@ -262,6 +255,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              readOnly
             />
           </div>
           <div>
@@ -273,22 +267,21 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
-              <option value="">Select Active Status</option>
               <option value="Y">Yes</option>
               <option value="N">No</option>
             </select>
           </div>
-          <div className="flex justify-end mt-4">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="mr-2 px-4 py-2 bg-gray-300 rounded-md"
+              className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Update
             </button>

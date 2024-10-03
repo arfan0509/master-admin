@@ -91,13 +91,30 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
     }
   }, [formData.objectgroup, machineIds]);
 
-  const handleChange = (
+  const handleChange = async (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Jika field yang diubah adalah objectid
+    if (name === "objectid" && value) {
+      const selectedMachine = filteredMachineIds.find(
+        (id) => id.objectid === value
+      );
+      if (selectedMachine) {
+        const { lat, long } = selectedMachine; // Ambil lat dan long dari objek yang dipilih
+        setFormData((prev) => ({
+          ...prev,
+          lat,
+          long,
+        }));
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -253,6 +270,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
               value={formData.lat}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              readOnly
             />
           </div>
           <div>
@@ -263,31 +281,47 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
               value={formData.long}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              readOnly
             />
           </div>
           <div>
             <label className="block">Active</label>
-            <select
-              name="active"
-              value={formData.active}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            >
-              <option value="Y">Yes</option>
-              <option value="N">No</option>
-            </select>
+            <div className="flex space-x-4 mt-1">
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name="active"
+                  value="Y"
+                  checked={formData.active === "Y"}
+                  onChange={handleChange}
+                  className="form-radio"
+                />
+                <span className="ml-2">Yes</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name="active"
+                  value="N"
+                  checked={formData.active === "N"}
+                  onChange={handleChange}
+                  className="form-radio"
+                />
+                <span className="ml-2">No</span>
+              </label>
+            </div>
           </div>
           <div className="flex justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="mr-2 px-4 py-2 bg-gray-300 rounded-md"
+              className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Submit
             </button>

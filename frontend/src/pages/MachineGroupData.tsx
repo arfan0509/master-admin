@@ -39,7 +39,7 @@ const MachineGroupData: React.FC = () => {
       property: "PJLBBS",
       fields: "id, objecttype, objectgroup, description, active",
       pageno: "0",
-      recordperpage: "20",
+      recordperpage: "9999999999",
       condition: {
         active: {
           operator: "eq",
@@ -128,7 +128,7 @@ const MachineGroupData: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded">
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300">
       <header className="p-6 bg-[#385878] text-white">
         <h1 className="text-3xl font-semibold">Machine Group Data</h1>
       </header>
@@ -198,7 +198,7 @@ const MachineGroupData: React.FC = () => {
                   <td className="py-4 px-6 border-b">
                     <button
                       onClick={() => handleEditClick(machineGroup)}
-                      className="bg-[#f39512] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+                     className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
                     >
                       Edit
                     </button>
@@ -209,21 +209,60 @@ const MachineGroupData: React.FC = () => {
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Controls */}
         <div className="flex justify-center mt-6">
-          {Array.from({ length: totalPages }, (_, index) => (
-            <button
-              key={index + 1}
-              onClick={() => handlePageChange(index + 1)}
-              className={`mx-2 px-4 py-2 border rounded-lg ${
-                currentPage === index + 1
-                  ? "bg-[#385878] text-white"
-                  : "bg-white text-gray-700 border-gray-300"
-              } hover:bg-opacity-90 transform transition-all duration-200`}
-            >
-              {index + 1}
-            </button>
-          ))}
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`mx-1 px-3 py-1 ${
+              currentPage === 1
+                ? "opacity-50 cursor-not-allowed"
+                : "text-gray-700 hover:text-[#385878]"
+            }`}
+          >
+            &lt;
+          </button>
+
+          {Array.from({ length: totalPages }, (_, index) => {
+            const pageNumber = index + 1;
+            if (
+              pageNumber <= 4 ||
+              (currentPage - 2 <= pageNumber &&
+                pageNumber <= currentPage + 2) ||
+              pageNumber === totalPages
+            ) {
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber)}
+                  className={`mx-1 px-3 py-1 transition-colors duration-200 ${
+                    currentPage === pageNumber
+                      ? "text-white bg-[#385878] rounded-full"
+                      : "text-gray-700 hover:text-white hover:bg-[#385878] rounded-full"
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            }
+            return null;
+          })}
+
+          {totalPages > 4 && currentPage < totalPages - 2 && (
+            <span className="mx-1 text-gray-700">...</span>
+          )}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`mx-1 px-3 py-1 ${
+              currentPage === totalPages
+                ? "opacity-50 cursor-not-allowed"
+                : "text-gray-700 hover:text-[#385878]"
+            }`}
+          >
+            &gt;
+          </button>
         </div>
       </main>
 

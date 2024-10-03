@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { encryptMessage } from "../utils/encryptionUtils";
-import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils"; // Import dari file utilitas
+import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
+import MapLocationModal from "./MapLocationModal"; // Import MapLocationModal
+import { MapPin } from "@phosphor-icons/react";
+import { countries } from "../utils/countries"; // Import data negara
 
 interface MachineId {
   id: number;
@@ -57,6 +60,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
   const [filteredMachinegroups, setFilteredMachinegroups] = useState<
     { id: number; objecttype: string; objectgroup: string }[]
   >([]);
+  const [showMapModal, setShowMapModal] = useState(false); // State untuk MapLocationModal
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,7 +84,6 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
 
   useEffect(() => {
     if (formData.objecttype) {
-      // Filter machine groups based on selected object type
       const filteredGroups = machinegroups.filter(
         (group) => group.objecttype === formData.objecttype
       );
@@ -99,10 +102,18 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
     });
   };
 
+  const handleLocationSelect = (lat: number, long: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      lat: lat.toString(),
+      long: long.toString(),
+    }));
+    setShowMapModal(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Format JSON data sesuai dengan format yang diharapkan backend
     const jsonData = {
       datacore: "MACHINE",
       folder: "MACHINEID",
@@ -132,14 +143,8 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
       },
     };
 
-    // Convert JSON data to pretty-printed string
-    const jsonString = JSON.stringify(jsonData, null, 2); // Pretty print JSON with indentation
+    const encryptedMessage = encryptMessage(JSON.stringify(jsonData));
 
-    // Encrypt JSON data
-    const encryptedMessage = encryptMessage(jsonString);
-    // console.log(encryptedMessage);
-
-    // Prepare payload
     const payload = {
       apikey: "06EAAA9D10BE3D4386D10144E267B681",
       uniqueid: "JFKlnUZyyu0MzRqj",
@@ -149,12 +154,10 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
     };
 
     try {
-      // Send PUT request with encrypted payload
-      const response = await axios.post(`/api`, payload);
-
+      await axios.post(`/api`, payload);
       alert("Machine ID updated successfully!");
-      onUpdate(); // Update list machine ID
-      onClose(); // Close modal setelah update
+      onUpdate();
+      onClose();
     } catch (error) {
       console.error("Error updating machine ID:", error);
     }
@@ -249,14 +252,20 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
           </div>
           <div>
             <label className="block">Country</label>
-            <input
-              type="text"
+            <select
               name="countryid"
               value={formData.countryid}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
-            />
+            >
+              <option value="">Select Country</option>
+              {countries.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block">State</label>
@@ -282,65 +291,100 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
           </div>
           <div>
             <label className="block">Region</label>
-            <input
-              type="text"
+            <select
               name="regionid"
               value={formData.regionid}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
-            />
+            >
+              <option value="">Select Region</option>
+              {countries.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block">Latitude</label>
-            <input
-              type="text"
-              name="lat"
-              value={formData.lat}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              required
-            />
+            <div className="flex items-center">
+              <input
+                name="lat"
+                type="text"
+                value={formData.lat}
+                readOnly
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowMapModal(true)}
+                className="ml-2 p-[6.5px] bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center"
+              >
+                <MapPin size={24} /> {/* Hanya ikon */}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block">Longitude</label>
             <input
-              type="text"
               name="long"
+              type="text"
               value={formData.long}
-              onChange={handleChange}
+              readOnly
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              required
             />
           </div>
           <div>
             <label className="block">Active</label>
-            <input
-              type="text"
-              name="active"
-              value={formData.active}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              required
-            />
+            <div className="flex space-x-4 mt-1">
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name="active"
+                  value="Y"
+                  checked={formData.active === "Y"}
+                  onChange={handleChange}
+                  className="form-radio"
+                />
+                <span className="ml-2">Yes</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name="active"
+                  value="N"
+                  checked={formData.active === "N"}
+                  onChange={handleChange}
+                  className="form-radio"
+                />
+                <span className="ml-2">No</span>
+              </label>
+            </div>
           </div>
-          <div className="flex justify-end space-x-4 mt-4">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-500 text-white rounded-md"
+              className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Update
             </button>
           </div>
         </form>
       </div>
+      {showMapModal && (
+        <MapLocationModal
+        onLocationSelect={handleLocationSelect}
+          onClose={() => setShowMapModal(false)}
+        />
+      )}
     </div>
   );
 };
