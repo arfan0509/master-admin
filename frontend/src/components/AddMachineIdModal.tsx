@@ -3,7 +3,6 @@ import axios from "axios";
 import { encryptMessage } from "../utils/encryptionUtils";
 import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
 import MapLocationModal from "./MapLocationModal"; // Import MapLocationModal
-import CountrySelectModal from "./CountrySelectModal"; // Import modal pemilihan negara
 import { MapPin } from "@phosphor-icons/react";
 import { countries } from "../utils/countries";
 
@@ -20,12 +19,12 @@ interface MachineGroup {
 
 interface AddMachineIdModalProps {
   onClose: () => void;
-  onUpdate: () => void;
+  onAdd: () => void;
 }
 
 const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
   onClose,
-  onUpdate,
+  onAdd,
 }) => {
   const [formData, setFormData] = useState({
     objecttype: "",
@@ -49,7 +48,6 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
     MachineGroup[]
   >([]);
   const [showMapModal, setShowMapModal] = useState(false); // State for MapLocationModal
-  const [showCountryModal, setShowCountryModal] = useState(false); // State for CountrySelectModal
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,18 +88,11 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleCountrySelect = (country: { code: string; name: string }) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      countryid: country.code, // Update countryid dengan kode negara yang dipilih
+      [name]: value.toUpperCase(), // Mengubah input menjadi huruf kapital
     }));
-    setShowCountryModal(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,8 +139,8 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
       });
 
       if (response.status === 200 || response.status === 201) {
-        console.log("Machine ID created successfully!");
-        onUpdate();
+        alert("Machine ID created successfully!");
+        onAdd();
         onClose();
       } else {
         console.error("Unexpected response status:", response.status);
@@ -168,16 +159,15 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
     }));
     setShowMapModal(false);
   };
-
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
       <div
         className="fixed inset-0 bg-black opacity-50"
         onClick={onClose}
       ></div>
-      <div className="bg-white w-full max-w-2xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
+      <div className="bg-white w-full max-w-4xl mx-auto p-6 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Add Machine ID</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
           <div>
             <label className="block">Object Type</label>
             <select
@@ -221,6 +211,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              maxLength={10} // Batas panjang input
             />
           </div>
           <div>
@@ -232,6 +223,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              maxLength={50} // Batas panjang input
             />
           </div>
           <div>
@@ -243,6 +235,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              maxLength={6} // Batas panjang input
             />
           </div>
           <div>
@@ -254,6 +247,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              maxLength={6} // Batas panjang input
             />
           </div>
           <div>
@@ -282,6 +276,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              maxLength={3} // Batas panjang input
             />
           </div>
           <div>
@@ -293,6 +288,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              maxLength={3} // Batas panjang input
             />
           </div>
           <div>
@@ -313,62 +309,68 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
             </select>
           </div>
           <div>
-            <label className="block">Latitude</label>
-            <div className="flex items-center">
+            <label className="block">Latitude & Longitude</label>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setShowMapModal(true)}
+                className="p-[6.5px] bg-[#385878] text-white hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200 flex items-center rounded-md"
+              >
+                <MapPin size={24} />
+              </button>
               <input
                 name="lat"
                 type="text"
                 value={formData.lat}
                 readOnly
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                placeholder="Latitude"
               />
-              <button
-                type="button"
-                onClick={() => setShowMapModal(true)}
-                className="ml-2 p-[6.5px] bg-[#385878] text-white hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200 flex items-center rounded-md"
-              >
-                <MapPin size={24} /> {/* Ikon hanya */}
-              </button>
+              <input
+                name="long"
+                type="text"
+                value={formData.long}
+                readOnly
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                placeholder="Longitude"
+              />
             </div>
           </div>
           <div>
-            <label className="block">Longitude</label>
-            <input
-              name="long"
-              type="text"
-              value={formData.long}
-              readOnly
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
-          </div>
-          <div>
             <label className="block">Active</label>
-            <div className="flex space-x-4 mt-1">
-              <label className="inline-flex items-center">
+            <div className="flex items-center mt-5 space-x-6">
+              <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
                   name="active"
                   value="Y"
                   checked={formData.active === "Y"}
                   onChange={handleChange}
-                  className="form-radio"
+                  className="hidden peer"
                 />
+                <div className="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center peer-checked:bg-[#385878] peer-checked:border-transparent transition duration-200 ease-in-out">
+                  <div className="w-3 h-3 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition duration-200 ease-in-out"></div>
+                </div>
                 <span className="ml-2">Yes</span>
               </label>
-              <label className="inline-flex items-center">
+              <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
                   name="active"
                   value="N"
                   checked={formData.active === "N"}
                   onChange={handleChange}
-                  className="form-radio"
+                  className="hidden peer"
                 />
+                <div className="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center peer-checked:bg-[#385878] peer-checked:border-transparent transition duration-200 ease-in-out">
+                  <div className="w-3 h-3 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition duration-200 ease-in-out"></div>
+                </div>
                 <span className="ml-2">No</span>
               </label>
             </div>
           </div>
-          <div className="flex justify-end">
+
+          <div className="col-span-2 flex justify-end">
             <button
               type="button"
               onClick={onClose}
@@ -387,14 +389,8 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
       </div>
       {showMapModal && (
         <MapLocationModal
-          onClose={() => setShowMapModal(false)}
           onLocationSelect={handleLocationSelect}
-        />
-      )}
-      {showCountryModal && (
-        <CountrySelectModal
-          onClose={() => setShowCountryModal(false)}
-          onCountrySelect={handleCountrySelect} // Pass handler to the modal
+          onClose={() => setShowMapModal(false)}
         />
       )}
     </div>

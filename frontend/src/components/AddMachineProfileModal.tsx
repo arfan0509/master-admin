@@ -11,12 +11,12 @@ import { countries } from "../utils/countries";
 
 interface AddMachineProfileModalProps {
   onClose: () => void;
-  onUpdate: () => void;
+  onAdd: () => void;
 }
 
 const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
   onClose,
-  onUpdate,
+  onAdd,
 }) => {
   const [formData, setFormData] = useState({
     objecttype: "",
@@ -231,7 +231,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
       const response = await axios.post("/api", payload);
 
       alert("Machine profile created successfully!");
-      onUpdate();
+      onAdd();
       onClose();
     } catch (error) {
       console.error("Error creating machine profile:", error);
@@ -240,13 +240,10 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div
-        className="fixed inset-0 bg-black opacity-50"
-        onClick={onClose}
-      ></div>
-      <div className="bg-white w-full max-w-2xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
+      <div className="fixed inset-0 bg-black opacity-50" onClick={onClose}></div>
+      <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Add Machine Profile</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block">Object Type</label>
             <select
@@ -257,14 +254,14 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               required
             >
               <option value="">Select Object Type</option>
-              {machineTypes.map((type: any) => (
+              {machineTypes.map((type) => (
                 <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
               ))}
             </select>
           </div>
-
+  
           <div>
             <label className="block">Object Group</label>
             <select
@@ -277,7 +274,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
             >
               <option value="">Select Object Group</option>
               {filteredMachineGroups.length > 0 ? (
-                filteredMachineGroups.map((group: any) => (
+                filteredMachineGroups.map((group) => (
                   <option key={group.id} value={group.objectgroup}>
                     {group.objectgroup}
                   </option>
@@ -287,7 +284,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               )}
             </select>
           </div>
-
+  
           <div>
             <label className="block">Object ID</label>
             <select
@@ -300,7 +297,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
             >
               <option value="">Select Object ID</option>
               {filteredMachineIds.length > 0 ? (
-                filteredMachineIds.map((id: any) => (
+                filteredMachineIds.map((id) => (
                   <option key={id.objectid} value={id.objectid}>
                     {id.objectid}
                   </option>
@@ -310,7 +307,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               )}
             </select>
           </div>
-
+  
           <div>
             <label className="block">Object Code</label>
             <select
@@ -323,7 +320,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
             >
               <option value="">Select Object Code</option>
               {filteredObjectCodes.length > 0 ? (
-                filteredObjectCodes.map((code: any) => (
+                filteredObjectCodes.map((code) => (
                   <option key={code.objectcode} value={code.objectcode}>
                     {code.objectcode}
                   </option>
@@ -333,7 +330,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               )}
             </select>
           </div>
-
+  
           <div>
             <label className="block">Object Name</label>
             <input
@@ -346,7 +343,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               readOnly // Set readOnly jika Anda hanya ingin menampilkan data, tidak bisa diedit langsung
             />
           </div>
-
+  
           <div>
             <label className="block">Object Status</label>
             <input
@@ -355,9 +352,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.objectstatus}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={1}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Description</label>
             <input
@@ -366,9 +365,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.description}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Registered Date</label>
             <input
@@ -377,9 +378,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.registereddate}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Registered No</label>
             <input
@@ -388,9 +391,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.registeredno}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Registered By</label>
             <input
@@ -399,9 +404,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.registeredby}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Country of Origin</label>
             <select
@@ -419,7 +426,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               ))}
             </select>
           </div>
-
+  
           <div>
             <label className="block">Date of Birth</label>
             <input
@@ -430,21 +437,21 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
-
+  
           <div>
-            <label className="block">Sex</label>
+            <label className="block">Gender</label>
             <select
               name="sex"
               value={formData.sex}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             >
-              <option value="">Select Sex</option>
+              <option value="">Select Gender</option>
               <option value="M">Male</option>
               <option value="F">Female</option>
             </select>
           </div>
-
+  
           <div>
             <label className="block">Document No</label>
             <input
@@ -453,9 +460,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.documentno}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Vendor</label>
             <input
@@ -464,9 +473,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.vendor}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Notes</label>
             <textarea
@@ -474,9 +485,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.notes}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Photo Gallery 1</label>
             <input
@@ -485,9 +498,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.photogalery_1}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Photo Gallery 2</label>
             <input
@@ -496,9 +511,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.photogalery_2}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Photo Gallery 3</label>
             <input
@@ -507,9 +524,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.photogalery_3}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Photo Gallery 4</label>
             <input
@@ -518,9 +537,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.photogalery_4}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Photo Gallery 5</label>
             <input
@@ -529,9 +550,11 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.photogalery_5}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
             />
           </div>
-
+  
           <div>
             <label className="block">Video</label>
             <input
@@ -540,10 +563,46 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               value={formData.video}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
             />
           </div>
 
-          <div className="flex justify-end">
+          <div>
+            <label className="block">Active</label>
+            <div className="flex items-center mt-5 space-x-6">
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="active"
+                  value="Y"
+                  checked={formData.active === "Y"}
+                  onChange={handleChange}
+                  className="hidden peer"
+                />
+                <div className="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center peer-checked:bg-[#385878] peer-checked:border-transparent transition duration-200 ease-in-out">
+                  <div className="w-3 h-3 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition duration-200 ease-in-out"></div>
+                </div>
+                <span className="ml-2">Yes</span>
+              </label>
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="active"
+                  value="N"
+                  checked={formData.active === "N"}
+                  onChange={handleChange}
+                  className="hidden peer"
+                />
+                <div className="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center peer-checked:bg-[#385878] peer-checked:border-transparent transition duration-200 ease-in-out">
+                  <div className="w-3 h-3 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition duration-200 ease-in-out"></div>
+                </div>
+                <span className="ml-2">No</span>
+              </label>
+            </div>
+          </div>
+  
+          <div className="col-span-2 flex justify-end mt-4">
             <button
               type="button"
               onClick={onClose}
@@ -562,6 +621,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
       </div>
     </div>
   );
+  
 };
 
 export default AddMachineProfileModal;

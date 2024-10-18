@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import * as XLSX from "xlsx";
 import EditMachinetypeModal from "../components/EditMachinetypeModal";
 import AddMachinetypeModal from "../components/AddMachinetypeModal";
+import MachineTypeGuideModal from "../components/guide/MachineTypeGuide";
 import { encryptMessage, decryptMessage } from "../utils/encryptionUtils";
+import { FileXls, Question } from "@phosphor-icons/react";
 
 interface Machinetype {
   id: number;
@@ -14,16 +17,19 @@ interface Machinetype {
 const MachineTypeData: React.FC = () => {
   const [machinetypes, setMachinetypes] = useState<Machinetype[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("Y"); // default Y
+  const [dateFilter, setDateFilter] = useState("newest"); // default Terbaru
   const [selectedMachinetype, setSelectedMachinetype] =
     useState<Machinetype | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   useEffect(() => {
     fetchMachinetypes();
-  }, []);
+  }, [activeFilter, dateFilter]); // Re-fetch data when activeFilter or dateFilter changes
 
   const fetchMachinetypes = async () => {
     const requestPayload = {
@@ -38,7 +44,7 @@ const MachineTypeData: React.FC = () => {
       condition: {
         active: {
           operator: "eq",
-          value: "Y",
+          value: activeFilter, // Dynamic value based on activeFilter
         },
       },
     };
@@ -64,8 +70,11 @@ const MachineTypeData: React.FC = () => {
       const result = JSON.parse(decryptedMessage);
 
       if (Array.isArray(result.data)) {
+        // Sorting berdasarkan dateFilter
         const sortedMachinetypes = result.data.sort(
-          (a: Machinetype, b: Machinetype) => a.id - b.id
+          (a: Machinetype, b: Machinetype) => {
+            return dateFilter === "newest" ? b.id - a.id : a.id - b.id;
+          }
         );
         setMachinetypes(sortedMachinetypes);
       } else {
@@ -95,28 +104,43 @@ const MachineTypeData: React.FC = () => {
     fetchMachinetypes();
   };
 
+  const filteredItems = machinetypes.filter(
+    (machinetype) =>
+      machinetype.objecttype
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      machinetype.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = machinetypes
-    .filter((machinetype) =>
-      machinetype.objecttype.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
 
-  const totalPages = Math.ceil(
-    machinetypes.filter((machinetype) =>
-      machinetype.objecttype.toLowerCase().includes(searchQuery.toLowerCase())
-    ).length / itemsPerPage
-  );
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
   };
 
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(filteredItems);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Machine Types");
+    XLSX.writeFile(workbook, "FilteredMachineTypes.xlsx");
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300">
-      <header className="p-6 bg-[#385878] text-white">
-        <h1 className="text-3xl font-semibold">Machine Type Data</h1>
+      <header className="p-6 bg-[#385878] text-white flex justify-between items-center">
+        <h1 className="text-3xl font-semibold flex items-center gap-2">
+          Machine Type Data
+          <Question
+            size={32}
+            weight="regular"
+            className="cursor-pointer duration-200 hover:scale-105" // Tambahkan kelas di sini
+            onClick={() => setGuideModalOpen(true)}
+          />
+        </h1>
       </header>
       <main className="flex flex-col flex-1 overflow-hidden p-6">
         <div className="flex justify-between items-center mb-6">
@@ -126,13 +150,42 @@ const MachineTypeData: React.FC = () => {
           >
             Add Data
           </button>
-          <input
-            type="text"
-            placeholder="Search objecttype..."
-            value={searchQuery}
-            onChange={handleSearch}
-            className="border border-gray-300 px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-[#385878]"
-          />
+          <div className="flex items-center gap-4">
+            {/* Dropdown untuk filter Terbaru dan Terlama */}
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="border border-gray-300 px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-[#385878]"
+            >
+              <option value="newest">Latest</option>
+              <option value="oldest">Oldest</option>
+            </select>
+            {/* Dropdown untuk filter Active dan Inactive */}
+            <select
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value)}
+              className="border border-gray-300 px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-[#385878]"
+            >
+              <option value="Y">Active</option>
+              <option value="N">Inactive</option>
+            </select>
+
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={handleSearch}
+              className="border border-gray-300 px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-[#385878]"
+            />
+
+            <button
+              onClick={exportToExcel}
+              className="bg-green-500 text-white px-4 py-2 flex items-center gap-2 rounded-lg hover:bg-green-600 transform hover:scale-105 transition-transform duration-200"
+            >
+              Export to
+              <FileXls size={20} weight="bold" />
+            </button>
+          </div>
         </div>
         <div className="flex-1">
           <table className="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -148,7 +201,7 @@ const MachineTypeData: React.FC = () => {
             <tbody>
               {currentItems.map((machinetype, index) => (
                 <tr key={machinetype.id} className="hover:bg-[#3858780d]">
-                  <td className="py-4 px-6 border-b">
+                  <td className="py-4 px-6 border-b text-center w-12">
                     {indexOfFirstItem + index + 1}
                   </td>
                   <td className="py-4 px-6 border-b">
@@ -157,7 +210,9 @@ const MachineTypeData: React.FC = () => {
                   <td className="py-4 px-6 border-b">
                     {machinetype.description}
                   </td>
-                  <td className="py-4 px-6 border-b">{machinetype.active}</td>
+                  <td className="py-4 px-6 border-b text-center w-24">
+                    {machinetype.active}
+                  </td>
                   <td className="py-4 px-6 border-b">
                     <button
                       onClick={() => handleEditClick(machinetype)}
@@ -171,7 +226,7 @@ const MachineTypeData: React.FC = () => {
             </tbody>
           </table>
         </div>
-
+        
         {/* Pagination Controls */}
         <div className="flex justify-center mt-6">
           <button
@@ -188,32 +243,20 @@ const MachineTypeData: React.FC = () => {
 
           {Array.from({ length: totalPages }, (_, index) => {
             const pageNumber = index + 1;
-            if (
-              pageNumber <= 4 ||
-              (currentPage - 2 <= pageNumber &&
-                pageNumber <= currentPage + 2) ||
-              pageNumber === totalPages
-            ) {
-              return (
-                <button
-                  key={pageNumber}
-                  onClick={() => handlePageChange(pageNumber)}
-                  className={`mx-1 px-3 py-1 transition-colors duration-200 ${
-                    currentPage === pageNumber
-                      ? "text-white bg-[#385878] rounded-full"
-                      : "text-gray-700 hover:text-white hover:bg-[#385878] rounded-full"
-                  }`}
-                >
-                  {pageNumber}
-                </button>
-              );
-            }
-            return null;
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => handlePageChange(pageNumber)}
+                className={`mx-1 px-3 py-1 transition-colors duration-200 ${
+                  currentPage === pageNumber
+                    ? "text-white bg-[#385878] rounded-full"
+                    : "text-gray-700 hover:text-white hover:bg-[#385878] rounded-full"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            );
           })}
-
-          {totalPages > 4 && currentPage < totalPages - 2 && (
-            <span className="mx-1 text-gray-700">...</span>
-          )}
 
           <button
             onClick={() => handlePageChange(currentPage + 1)}
@@ -231,15 +274,25 @@ const MachineTypeData: React.FC = () => {
 
       {modalOpen && selectedMachinetype && (
         <EditMachinetypeModal
-          machinetype={selectedMachinetype}
+          isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
           onUpdate={handleUpdate}
+          machinetype={selectedMachinetype}
         />
       )}
+
       {addModalOpen && (
         <AddMachinetypeModal
+          isOpen={addModalOpen}
           onClose={() => setAddModalOpen(false)}
           onAdd={handleAdd}
+        />
+      )}
+
+      {guideModalOpen && (
+        <MachineTypeGuideModal
+          isOpen={guideModalOpen}
+          onClose={() => setGuideModalOpen(false)}
         />
       )}
     </div>

@@ -6,13 +6,12 @@ import { Gear, Stack, Tag, Info, UserGear } from "@phosphor-icons/react"; // Imp
 const Sidebar = () => {
   return (
     <div className="w-16 h-screen bg-[#385878] text-white fixed z-50 top-0 transition-all duration-300 ease-in-out hover:w-64 overflow-hidden">
-      {/* Bagian Logo dengan Lottie di sebelah kiri */}
-      <div className="mt-14 ml-3 flex items-center">
+      <div className="mt-10 ml-3 flex items-center">
         <DotLottieReact
-          src="https://lottie.host/65271e8d-ed66-4079-af24-688a030cfa30/txzWa7dG6y.json" // Path ke animasi .lottie
+          src="https://lottie.host/65271e8d-ed66-4079-af24-688a030cfa30/txzWa7dG6y.json"
           loop
           autoplay
-          style={{ height: "45px", width: "45px" }} // Ukuran animasi
+          style={{ height: "45px", width: "45px" }}
         />
         <span className="whitespace-nowrap overflow-hidden text-ellipsis transition-opacity duration-300 group-hover:opacity-100 absolute left-16 group-hover:block text-xl font-bold">
           Master Admin
@@ -26,7 +25,7 @@ const Sidebar = () => {
         >
           <Gear size={24} />
           <span className="whitespace-nowrap overflow-hidden text-ellipsis transition-opacity duration-300 group-hover:opacity-100 absolute left-16 group-hover:block">
-            Machinetype
+            Machine Type
           </span>
         </Link>
         <Link
@@ -35,7 +34,7 @@ const Sidebar = () => {
         >
           <Stack size={24} />
           <span className="whitespace-nowrap overflow-hidden text-ellipsis transition-opacity duration-300 group-hover:opacity-100 absolute left-16 group-hover:block">
-            Machinegroup
+            Machine Group
           </span>
         </Link>
         <Link

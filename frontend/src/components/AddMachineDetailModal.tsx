@@ -9,12 +9,12 @@ import {
 
 interface AddMachineDetailModalProps {
   onClose: () => void;
-  onUpdate: () => void;
+  onAdd: () => void;
 }
 
 const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
   onClose,
-  onUpdate,
+  onAdd,
 }) => {
   const [formData, setFormData] = useState({
     objecttype: "",
@@ -154,16 +154,12 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
       message: encryptedMessage,
     };
 
-    // Log JSON and encrypted payload
-    console.log("Original JSON Data:", jsonString);
-    console.log("Encrypted Payload:", JSON.stringify(payload, null, 2));
-
     try {
       // Send POST request with encrypted payload
       const response = await axios.post("/api", payload);
 
       alert("Machine detail created successfully!");
-      onUpdate();
+      onAdd();
       onClose();
     } catch (error) {
       console.error("Error creating machine detail:", error);
@@ -178,7 +174,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
       ></div>
       <div className="bg-white w-full max-w-2xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Add Machine Detail</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
           <div>
             <label className="block">Object Type</label>
             <select
@@ -189,7 +185,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
               required
             >
               <option value="">Select Object Type</option>
-              {machineTypes.map((type: any) => (
+              {machineTypes.map((type) => (
                 <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
@@ -208,7 +204,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
             >
               <option value="">Select Object Group</option>
               {filteredMachineGroups.length > 0 ? (
-                filteredMachineGroups.map((group: any) => (
+                filteredMachineGroups.map((group) => (
                   <option key={group.id} value={group.objectgroup}>
                     {group.objectgroup}
                   </option>
@@ -230,7 +226,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
             >
               <option value="">Select Object ID</option>
               {filteredMachineIds.length > 0 ? (
-                filteredMachineIds.map((id: any) => (
+                filteredMachineIds.map((id) => (
                   <option key={id.objectid} value={id.objectid}>
                     {id.objectid}
                   </option>
@@ -249,6 +245,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              maxLength={64} // Batas panjang input untuk objectcode
             />
           </div>
           <div>
@@ -260,58 +257,64 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
+              maxLength={50} // Batas panjang input untuk objectname
             />
           </div>
           <div>
-            <label className="block">Latitude</label>
-            <input
-              type="text"
-              name="lat"
-              value={formData.lat}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              readOnly
-            />
-          </div>
-          <div>
-            <label className="block">Longitude</label>
-            <input
-              type="text"
-              name="long"
-              value={formData.long}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              readOnly
-            />
+            <label className="block">Latitude & Longitude</label>
+            <div className="flex items-center space-x-2">
+              <input
+                name="lat"
+                type="text"
+                value={formData.lat}
+                readOnly
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                placeholder="Latitude"
+              />
+              <input
+                name="long"
+                type="text"
+                value={formData.long}
+                readOnly
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                placeholder="Longitude"
+              />
+            </div>
           </div>
           <div>
             <label className="block">Active</label>
-            <div className="flex space-x-4 mt-1">
-              <label className="inline-flex items-center">
+            <div className="flex items-center mt-5 space-x-6">
+              <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
                   name="active"
                   value="Y"
                   checked={formData.active === "Y"}
                   onChange={handleChange}
-                  className="form-radio"
+                  className="hidden peer"
                 />
+                <div className="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center peer-checked:bg-[#385878] peer-checked:border-transparent transition duration-200 ease-in-out">
+                  <div className="w-3 h-3 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition duration-200 ease-in-out"></div>
+                </div>
                 <span className="ml-2">Yes</span>
               </label>
-              <label className="inline-flex items-center">
+              <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
                   name="active"
                   value="N"
                   checked={formData.active === "N"}
                   onChange={handleChange}
-                  className="form-radio"
+                  className="hidden peer"
                 />
+                <div className="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center peer-checked:bg-[#385878] peer-checked:border-transparent transition duration-200 ease-in-out">
+                  <div className="w-3 h-3 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition duration-200 ease-in-out"></div>
+                </div>
                 <span className="ml-2">No</span>
               </label>
             </div>
           </div>
-          <div className="flex justify-end">
+          <div className="col-span-2 flex justify-end">
             <button
               type="button"
               onClick={onClose}
