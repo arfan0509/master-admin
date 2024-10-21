@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { encryptMessage } from "../utils/encryptionUtils";
+import Tour from "reactour"; // Import React Tour
+import { Notebook } from "@phosphor-icons/react";
 
 interface Machinetype {
   id: number;
@@ -25,6 +27,27 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
     description: machinetype.description,
     active: machinetype.active,
   });
+
+  const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+
+  const steps = [
+    {
+      selector: ".objecttype-input", // Selector untuk elemen yang akan ditunjukkan
+      content: "Masukkan Object Type di sini (max 6 karakter).",
+    },
+    {
+      selector: ".description-input",
+      content: "Masukkan Deskripsi di sini (max 50 karakter).",
+    },
+    {
+      selector: ".active-radio",
+      content: "Pilih apakah tipe mesin ini aktif.",
+    },
+    {
+      selector: ".submit-button",
+      content: "Klik Update untuk memperbarui tipe mesin.",
+    },
+  ];
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -224,10 +247,24 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
     }
   };
 
+  const handleStartTour = () => {
+    setIsTourOpen(true); // Mulai tur saat tombol diklik
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+      <Tour
+        steps={steps}
+        isOpen={isTourOpen}
+        onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
+      />
       <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Update Machinetype</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold mb-4">Update Machinetype</h2>
+          <button onClick={handleStartTour} className="p-2">
+            <Notebook size={24} />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block">Object Type</label>
@@ -235,7 +272,7 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
               name="objecttype"
               value={formData.objecttype}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objecttype-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={6}
             />
@@ -246,14 +283,14 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="description-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={50}
             />
           </div>
           <div>
             <label className="block">Active</label>
-            <div className="flex items-center mt-5 space-x-6">
+            <div className="active-radio flex items-center mt-5 space-x-6">
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
@@ -294,7 +331,7 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
             </button>
             <button
               type="submit"
-              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Update
             </button>
