@@ -260,7 +260,7 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
       />
       <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold mb-4">Update Machinetype</h2>
+          <h2 className="text-xl font-bold mb-4">Edit Machine Type</h2>
           <button onClick={handleStartTour} className="p-2">
             <Notebook size={24} />
           </button>

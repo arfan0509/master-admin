@@ -266,7 +266,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
         onClick={onClose}
       ></div>
       <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Add Machine Profile</h2>
+        <h2 className="text-xl font-bold mb-4">Edit Machine Profile</h2>
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 sm:grid-cols-2 gap-4"

@@ -240,7 +240,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
         onClick={onClose}
       ></div>
       <div className="bg-white w-full max-w-4xl mx-auto p-6 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Add Machine ID</h2>
+        <h2 className="text-xl font-bold mb-4">Edit Machine ID</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
           <div>
             <label className="block">Object Type</label>
