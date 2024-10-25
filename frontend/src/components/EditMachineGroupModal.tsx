@@ -55,25 +55,27 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
   const steps = [
     {
-      selector: ".objecttype-input", // Selector untuk elemen yang akan ditunjukkan
+      selector: ".objecttype-input",
       content:
-        "Pilih object type yang tersedia disini, pastikan pilih yang sesuai dengan object group yang akan dibuat.",
+        "Pilih atau perbarui Object Type yang sesuai jika diperlukan. Pastikan sesuai dengan Object Group yang akan diperbarui.",
     },
     {
       selector: ".objectgroup-input",
-      content: "Masukkan object group di sini (max 6 karakter).",
+      content:
+        "Masukkan atau perbarui Object Group (maks 6 karakter) jika diperlukan.",
     },
     {
       selector: ".description-input",
-      content: "Masukkan Deskripsi di sini (max 50 karakter).",
+      content:
+        "Masukkan atau perbarui deskripsi (maks 50 karakter) jika diperlukan.",
     },
     {
       selector: ".active-radio",
-      content: "Pilih apakah tipe mesin ini aktif.",
+      content: "Pilih apakah Machine Group ini aktif/nonaktf.",
     },
     {
       selector: ".submit-button",
-      content: "Klik Update untuk memperbarui machine group.",
+      content: "Klik 'Update' untuk menyimpan perubahan pada Machine Group.",
     },
   ];
 

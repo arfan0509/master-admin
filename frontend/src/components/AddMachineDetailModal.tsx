@@ -6,6 +6,8 @@ import {
   fetchMachineGroups,
   fetchMachineIds,
 } from "../utils/dropdownUtils";
+import Tour from "reactour"; // Import React Tour
+import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
 
 interface AddMachineDetailModalProps {
   onClose: () => void;
@@ -91,6 +93,50 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
     }
   }, [formData.objectgroup, machineIds]);
 
+  const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const steps = [
+    {
+      selector: ".objecttype-input",
+      content:
+        "Pilih Object Type yang tersedia. Pastikan sesuai dengan Machine Detail yang akan dibuat.",
+    },
+    {
+      selector: ".objectgroup-input",
+      content:
+        "Pilih Object Group dari opsi yang tersedia. Pastikan sesuai dengan Machine Detail yang akan dibuat.",
+    },
+    {
+      selector: ".objectid-input",
+      content:
+        "Pilih Object ID dari opsi yang tersedia. Pastikan sesuai dengan Machine Detail yang akan dibuat.",
+    },
+    {
+      selector: ".objectcode-input",
+      content: "Masukkan kode unik untuk objek (maks 64 karakter).",
+    },
+    {
+      selector: ".objectname-input",
+      content:
+        "Masukkan Nama Objek (maks 50 karakter) untuk identifikasi objek.",
+    },
+    {
+      selector: ".latlong-input",
+      content: "Ini akan menampilkan koordinat dari Machine ID yang dipilih.",
+    },
+    {
+      selector: ".active-radio",
+      content: "Pilih apakah Machine Detail ini aktif atau tidak.",
+    },
+    {
+      selector: ".submit-button",
+      content: "Klik Submit untuk menambahkan Machine Detail baru.",
+    },
+  ];
+
+  const handleStartTour = () => {
+    setIsTourOpen(true); // Mulai tur saat tombol diklik
+  };
+
   const handleChange = async (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -172,8 +218,18 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
         className="fixed inset-0 bg-black opacity-50"
         onClick={onClose}
       ></div>
-      <div className="bg-white w-full max-w-2xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Add Machine Detail</h2>
+      <Tour
+        steps={steps}
+        isOpen={isTourOpen}
+        onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
+      />
+      <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
+        <div className="flex items-center justify-between mb-4 pb-5">
+          <h2 className="text-xl font-bold">Add Machine Detail</h2>
+          <button onClick={handleStartTour} className="p-2">
+            <Notebook size={24} />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
           <div>
             <label className="block">Object Type</label>
@@ -181,7 +237,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
               name="objecttype"
               value={formData.objecttype}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objecttype-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
@@ -198,7 +254,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
               name="objectgroup"
               value={formData.objectgroup}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectgroup-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               disabled={!formData.objecttype}
             >
@@ -220,7 +276,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
               name="objectid"
               value={formData.objectid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectid-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               disabled={!formData.objectgroup}
             >
@@ -243,7 +299,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
               name="objectcode"
               value={formData.objectcode}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectcode-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={64} // Batas panjang input untuk objectcode
             />
@@ -255,14 +311,14 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
               name="objectname"
               value={formData.objectname}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectname-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={50} // Batas panjang input untuk objectname
             />
           </div>
           <div>
             <label className="block">Latitude & Longitude</label>
-            <div className="flex items-center space-x-2">
+            <div className="latlong-input flex items-center space-x-2">
               <input
                 name="lat"
                 type="text"
@@ -283,7 +339,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
           </div>
           <div>
             <label className="block">Active</label>
-            <div className="flex items-center mt-5 space-x-6">
+            <div className="active-radio flex items-center mt-5 space-x-6">
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
@@ -324,7 +380,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
             </button>
             <button
               type="submit"
-              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Submit
             </button>

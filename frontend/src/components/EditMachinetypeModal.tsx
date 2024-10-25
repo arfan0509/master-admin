@@ -29,23 +29,24 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
   });
 
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
-
   const steps = [
     {
-      selector: ".objecttype-input", // Selector untuk elemen yang akan ditunjukkan
-      content: "Masukkan Object Type di sini (max 6 karakter).",
+      selector: ".objecttype-input",
+      content:
+        "Masukkan atau perbarui Object Type (maks 6 karakter) jika diperlukan.",
     },
     {
       selector: ".description-input",
-      content: "Masukkan Deskripsi di sini (max 50 karakter).",
+      content:
+        "Masukkan atau perbarui deskripsi (maks 50 karakter) jika diperlukan.",
     },
     {
       selector: ".active-radio",
-      content: "Pilih apakah tipe mesin ini aktif.",
+      content: "Pilih apakah Machine Type ini aktif/nonaktif.",
     },
     {
       selector: ".submit-button",
-      content: "Klik Update untuk memperbarui tipe mesin.",
+      content: "Klik 'Update' untuk menyimpan perubahan pada tipe mesin.",
     },
   ];
 

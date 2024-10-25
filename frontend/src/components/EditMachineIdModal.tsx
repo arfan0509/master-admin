@@ -5,6 +5,8 @@ import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
 import MapLocationModal from "./MapLocationModal"; // Import MapLocationModal
 import { MapPin } from "@phosphor-icons/react";
 import { countries } from "../utils/countries"; // Import data negara
+import Tour from "reactour"; // Import React Tour
+import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
 
 interface MachineId {
   id: number;
@@ -92,6 +94,76 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
       setFilteredMachinegroups([]);
     }
   }, [formData.objecttype, machinegroups]);
+
+  const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const steps = [
+    {
+      selector: ".objecttype-input",
+      content:
+        "Pilih atau perbarui Object Type yang sesuai jika diperlukan. Pastikan Object Type yang dipilih sesuai dengan Machine ID yang akan diperbarui.",
+    },
+    {
+      selector: ".objectgroup-input",
+      content:
+        "Pilih atau sesuaikan Object Group jika diperlukan. Pastikan sesuai dengan Machine ID yang akan diperbarui.",
+    },
+    {
+      selector: ".objectid-input",
+      content:
+        "Masukkan atau perbarui ID objek (maks 10 karakter) jika diperlukan.",
+    },
+    {
+      selector: ".objectname-input",
+      content:
+        "Masukkan atau perbarui nama objek (maks 50 karakter) jika diperlukan.",
+    },
+    {
+      selector: ".icongroup-input",
+      content:
+        "Masukkan atau perbarui grup ikon (maks 6 karakter) jika diperlukan.",
+    },
+    {
+      selector: ".iconid-input",
+      content:
+        "Masukkan atau perbarui ID ikon (maks 6 karakter) jika diperlukan.",
+    },
+    {
+      selector: ".country-input",
+      content:
+        "Pilih atau sesuaikan negara dari daftar yang tersedia jika diperlukan.",
+    },
+    {
+      selector: ".state-input",
+      content:
+        "Masukkan atau perbarui kode negara bagian (maks 3 karakter) jika diperlukan.",
+    },
+    {
+      selector: ".city-input",
+      content:
+        "Masukkan atau perbarui kode kota (maks 3 karakter) jika diperlukan.",
+    },
+    {
+      selector: ".region-input",
+      content:
+        "Pilih atau sesuaikan wilayah dari daftar yang tersedia jika diperlukan.",
+    },
+    {
+      selector: ".latlong-input",
+      content: "Perbarui lokasi dengan Latitude dan Longitude jika diperlukan.",
+    },
+    {
+      selector: ".active-radio",
+      content: "Pilih apakah Machine ID ini aktif/nonaktif",
+    },
+    {
+      selector: ".submit-button",
+      content: "Klik 'Update' untuk menyimpan perubahan pada Machine ID.",
+    },
+  ];
+
+  const handleStartTour = () => {
+    setIsTourOpen(true); // Mulai tur saat tombol diklik
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -223,9 +295,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
 
       await axios.post(`/api`, payloadMachineProfile);
 
-      alert(
-        "Machine ID and associated records updated successfully!"
-      );
+      alert("Machine ID and associated records updated successfully!");
       onUpdate(); // Update the list
       onClose(); // Close modal after update
     } catch (error) {
@@ -239,8 +309,18 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
         className="fixed inset-0 bg-black opacity-50"
         onClick={onClose}
       ></div>
-      <div className="bg-white w-full max-w-4xl mx-auto p-6 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Edit Machine ID</h2>
+      <Tour
+        steps={steps}
+        isOpen={isTourOpen}
+        onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
+      />
+      <div className="bg-white w-full max-w-3xl mx-auto p-6 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
+        <div className="flex items-center justify-between mb-4 pb-5">
+          <h2 className="text-xl font-bold">Edit Machine ID</h2>
+          <button onClick={handleStartTour} className="p-2">
+            <Notebook size={24} />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
           <div>
             <label className="block">Object Type</label>
@@ -248,7 +328,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
               name="objecttype"
               value={formData.objecttype}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objecttype-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
@@ -265,7 +345,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
               name="objectgroup"
               value={formData.objectgroup}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectgroup-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Group</option>
@@ -283,7 +363,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
               name="objectid"
               value={formData.objectid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectid-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={10} // Batas panjang input
             />
@@ -295,7 +375,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
               name="objectname"
               value={formData.objectname}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectname-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={50} // Batas panjang input
             />
@@ -307,7 +387,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
               name="icongroup"
               value={formData.icongroup}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="icongroup-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={6} // Batas panjang input
             />
@@ -319,7 +399,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
               name="iconid"
               value={formData.iconid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="iconid-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={6} // Batas panjang input
             />
@@ -330,7 +410,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
               name="countryid"
               value={formData.countryid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="country-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Country</option>
@@ -348,7 +428,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
               name="stateid"
               value={formData.stateid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="state-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={3} // Batas panjang input
             />
@@ -360,7 +440,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
               name="cityid"
               value={formData.cityid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="city-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={3} // Batas panjang input
             />
@@ -371,7 +451,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
               name="regionid"
               value={formData.regionid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="region-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Region</option>
@@ -384,7 +464,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
           </div>
           <div>
             <label className="block">Latitude & Longitude</label>
-            <div className="flex items-center space-x-2">
+            <div className="latlong-input flex items-center space-x-2">
               <button
                 type="button"
                 onClick={() => setShowMapModal(true)}
@@ -412,7 +492,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
           </div>
           <div>
             <label className="block">Active</label>
-            <div className="flex items-center mt-5 space-x-6">
+            <div className="active-radio flex items-center mt-5 space-x-6">
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
@@ -454,7 +534,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
             </button>
             <button
               type="submit"
-              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Update
             </button>

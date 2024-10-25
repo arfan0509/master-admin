@@ -5,6 +5,8 @@ import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
 import MapLocationModal from "./MapLocationModal"; // Import MapLocationModal
 import { MapPin } from "@phosphor-icons/react";
 import { countries } from "../utils/countries";
+import Tour from "reactour"; // Import React Tour
+import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
 
 interface MachineType {
   id: number;
@@ -84,6 +86,67 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
       setFormData((prev) => ({ ...prev, objectgroup: "" }));
     }
   }, [formData.objecttype, machinegroups]);
+
+  const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const steps = [
+    {
+      selector: ".objecttype-input",
+      content:
+        "Pilih Object Type yang tersedia. Pastikan sesuai dengan Machine ID yang akan dibuat.",
+    },
+    {
+      selector: ".objectgroup-input",
+      content: "Pilih Object Group yang sesuai dengan Machine ID yang akan dibuat.",
+    },
+    {
+      selector: ".objectid-input",
+      content: "Masukkan ID Objek di sini (maks 10 karakter).",
+    },
+    {
+      selector: ".objectname-input",
+      content: "Masukkan Nama Objek di sini (maks 50 karakter).",
+    },
+    {
+      selector: ".icongroup-input",
+      content: "Masukkan Grup Ikon di sini (maks 6 karakter).",
+    },
+    {
+      selector: ".iconid-input",
+      content: "Masukkan ID Ikon di sini (maks 6 karakter).",
+    },
+    {
+      selector: ".country-input",
+      content: "Pilih negara dari daftar yang tersedia.",
+    },
+    {
+      selector: ".state-input",
+      content: "Masukkan Kode Negara Bagian (maks 3 karakter).",
+    },
+    {
+      selector: ".city-input",
+      content: "Masukkan Kode Kota (maks 3 karakter).",
+    },
+    {
+      selector: ".region-input",
+      content: "Pilih Wilayah dari daftar yang tersedia.",
+    },
+    {
+      selector: ".latlong-input",
+      content: "Pilih lokasi pada peta.",
+    },
+    {
+      selector: ".active-radio",
+      content: "Pilih apakah Machine ID ini aktif atau tidak.",
+    },
+    {
+      selector: ".submit-button",
+      content: "Klik Submit untuk menambahkan Machine ID baru.",
+    },
+  ];
+
+  const handleStartTour = () => {
+    setIsTourOpen(true); // Mulai tur saat tombol diklik
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -165,8 +228,18 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
         className="fixed inset-0 bg-black opacity-50"
         onClick={onClose}
       ></div>
-      <div className="bg-white w-full max-w-4xl mx-auto p-6 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Add Machine ID</h2>
+      <Tour
+        steps={steps}
+        isOpen={isTourOpen}
+        onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
+      />
+      <div className="bg-white w-full max-w-3xl mx-auto p-6 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
+        <div className="flex items-center justify-between mb-4 pb-5">
+          <h2 className="text-xl font-bold">Add Machine ID</h2>
+          <button onClick={handleStartTour} className="p-2">
+            <Notebook size={24} />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
           <div>
             <label className="block">Object Type</label>
@@ -174,7 +247,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               name="objecttype"
               value={formData.objecttype}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objecttype-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
@@ -191,7 +264,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               name="objectgroup"
               value={formData.objectgroup}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectgroup-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Group</option>
@@ -209,7 +282,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               name="objectid"
               value={formData.objectid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectid-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={10} // Batas panjang input
             />
@@ -221,7 +294,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               name="objectname"
               value={formData.objectname}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectname-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={50} // Batas panjang input
             />
@@ -233,7 +306,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               name="icongroup"
               value={formData.icongroup}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="icongroup-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={6} // Batas panjang input
             />
@@ -245,7 +318,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               name="iconid"
               value={formData.iconid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="iconid-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={6} // Batas panjang input
             />
@@ -256,7 +329,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               name="countryid"
               value={formData.countryid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="country-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Country</option>
@@ -274,7 +347,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               name="stateid"
               value={formData.stateid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="state-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={3} // Batas panjang input
             />
@@ -286,7 +359,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               name="cityid"
               value={formData.cityid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="city-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               maxLength={3} // Batas panjang input
             />
@@ -297,7 +370,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
               name="regionid"
               value={formData.regionid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="region-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Region</option>
@@ -310,7 +383,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
           </div>
           <div>
             <label className="block">Latitude & Longitude</label>
-            <div className="flex items-center space-x-2">
+            <div className="latlong-input flex items-center space-x-2">
               <button
                 type="button"
                 onClick={() => setShowMapModal(true)}
@@ -338,7 +411,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
           </div>
           <div>
             <label className="block">Active</label>
-            <div className="flex items-center mt-5 space-x-6">
+            <div className="active-radio flex items-center mt-5 space-x-6">
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
@@ -380,7 +453,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
             </button>
             <button
               type="submit"
-              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Submit
             </button>

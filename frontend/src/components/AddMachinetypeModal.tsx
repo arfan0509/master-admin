@@ -22,16 +22,16 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
   const steps = [
     {
-      selector: ".objecttype-input", // Selector untuk elemen yang akan ditunjukkan
-      content: "Masukkan Object Type di sini (max 6 karakter).",
+      selector: ".objecttype-input",
+      content: "Masukkan Object Type di sini (maks 6 karakter).",
     },
     {
       selector: ".description-input",
-      content: "Masukkan Deskripsi di sini (max 50 karakter).",
+      content: "Masukkan Deskripsi di sini (maks 50 karakter).",
     },
     {
       selector: ".active-radio",
-      content: "Pilih apakah tipe mesin ini aktif.",
+      content: "Pilih apakah tipe mesin ini aktif atau tidak.",
     },
     {
       selector: ".submit-button",
