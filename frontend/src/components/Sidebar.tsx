@@ -1,39 +1,68 @@
 // src/components/Sidebar.tsx
 import { Link } from "react-router-dom";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { Gear, Stack, Tag, Info, UserGear } from "@phosphor-icons/react"; // Import ikon dari Phosphor Icons
 
 const Sidebar = () => {
   return (
-    <div className="w-64 h-screen bg-gray-800 text-white">
-      <nav className="mt-10">
+    <div className="w-16 h-screen bg-[#385878] text-white fixed z-50 top-0 transition-all duration-300 ease-in-out hover:w-64 overflow-hidden">
+      <div className="mt-10 ml-3 flex items-center">
+        <DotLottieReact
+          src="https://lottie.host/65271e8d-ed66-4079-af24-688a030cfa30/txzWa7dG6y.json"
+          loop
+          autoplay
+          style={{ height: "45px", width: "45px" }}
+        />
+        <span className="whitespace-nowrap overflow-hidden text-ellipsis transition-opacity duration-300 group-hover:opacity-100 absolute left-16 group-hover:block text-xl font-bold">
+          Master Admin
+        </span>
+      </div>
+
+      <nav className="mt-8">
         <Link
           to="/machinetype"
-          className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
+          className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-yellow-400 hover:scale-105 transform group"
         >
-          Machinetype
+          <Gear size={24} />
+          <span className="whitespace-nowrap overflow-hidden text-ellipsis transition-opacity duration-300 group-hover:opacity-100 absolute left-16 group-hover:block">
+            Machine Type
+          </span>
         </Link>
         <Link
           to="/machinegroup"
-          className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
+          className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-yellow-400 hover:scale-105 transform group"
         >
-          Machinegroup
+          <Stack size={24} />
+          <span className="whitespace-nowrap overflow-hidden text-ellipsis transition-opacity duration-300 group-hover:opacity-100 absolute left-16 group-hover:block">
+            Machine Group
+          </span>
         </Link>
         <Link
           to="/machineid"
-          className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
+          className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-yellow-400 hover:scale-105 transform group"
         >
-          Machine ID
+          <Tag size={24} />
+          <span className="whitespace-nowrap overflow-hidden text-ellipsis transition-opacity duration-300 group-hover:opacity-100 absolute left-16 group-hover:block">
+            Machine ID
+          </span>
         </Link>
         <Link
           to="/machinedetail"
-          className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
+          className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-yellow-400 hover:scale-105 transform group"
         >
-          Machine Detail
+          <Info size={24} />
+          <span className="whitespace-nowrap overflow-hidden text-ellipsis transition-opacity duration-300 group-hover:opacity-100 absolute left-16 group-hover:block">
+            Machine Detail
+          </span>
         </Link>
         <Link
           to="/machineprofile"
-          className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
+          className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-yellow-400 hover:scale-105 transform group"
         >
-          Machine Profile
+          <UserGear size={24} />
+          <span className="whitespace-nowrap overflow-hidden text-ellipsis transition-opacity duration-300 group-hover:opacity-100 absolute left-16 group-hover:block">
+            Machine Profile
+          </span>
         </Link>
       </nav>
     </div>

@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { ResizableBox } from "react-resizable";
-import "react-resizable/css/styles.css";
-
-// Import modal components
+import * as XLSX from "xlsx";
 import AddMachineProfileModal from "../components/AddMachineProfileModal";
 import EditMachineProfileModal from "../components/EditMachineProfileModal";
+import { encryptMessage, decryptMessage } from "../utils/encryptionUtils";
+import { FileXls, Question } from "@phosphor-icons/react";
+import MachineProfileGuide from "../components/guide/MachineProfileGuide";
 
 interface MachineProfile {
   id: number;
-  objecttype_name: string; // Update nama properti untuk objecttype
-  objectgroup_name: string; // Update nama properti untuk objectgroup
-  objectid_name: string; // Update nama properti untuk objectid
-  objectcode_name: string; // Update nama properti untuk objectcode
-  objectname: string;
+  objecttype: string;
+  objectgroup: string;
+  objectid: string;
+  objectcode: string;
   objectstatus: string;
+  objectname: string;
   description: string;
   registereddate: string;
   registeredno: string;
@@ -23,7 +23,7 @@ interface MachineProfile {
   dob: string;
   sex: string;
   documentno: string;
-  vendor_name: string; // Ganti dengan vendor_name
+  vendor: string;
   notes: string;
   photogalery_1: string;
   photogalery_2: string;
@@ -34,52 +34,78 @@ interface MachineProfile {
   active: string;
 }
 
-const columns = [
-  { key: "id", name: "ID" },
-  { key: "objecttype_name", name: "Object Type" }, // Update kolom untuk nama objecttype
-  { key: "objectgroup_name", name: "Object Group" }, // Update kolom untuk nama objectgroup
-  { key: "objectid_name", name: "Object ID" }, // Update kolom untuk nama objectid
-  { key: "objectcode_name", name: "Object Code" }, // Update kolom untuk nama objectcode
-  { key: "objectname", name: "Object Name" },
-  { key: "objectstatus", name: "Object Status" },
-  { key: "description", name: "Description" },
-  { key: "registereddate", name: "Registered Date" },
-  { key: "registeredno", name: "Registered No" },
-  { key: "registeredby", name: "Registered By" },
-  { key: "countryoforigin", name: "Country of Origin" },
-  { key: "dob", name: "DOB" },
-  { key: "sex", name: "Sex" },
-  { key: "documentno", name: "Document No" },
-  { key: "vendor_name", name: "Vendor" }, // Ganti dengan vendor_name
-  { key: "notes", name: "Notes" },
-  { key: "photogalery_1", name: "Photo Gallery 1" },
-  { key: "photogalery_2", name: "Photo Gallery 2" },
-  { key: "photogalery_3", name: "Photo Gallery 3" },
-  { key: "photogalery_4", name: "Photo Gallery 4" },
-  { key: "photogalery_5", name: "Photo Gallery 5" },
-  { key: "video", name: "Video" },
-  { key: "active", name: "Active" },
-];
-
 const MachineProfileData: React.FC = () => {
   const [machineProfiles, setMachineProfiles] = useState<MachineProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("Y"); // default Y
+  const [dateFilter, setDateFilter] = useState("newest"); // default Terbaru (newest)
   const [selectedMachineProfile, setSelectedMachineProfile] =
     useState<MachineProfile | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [guideModalOpen, setGuideModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     fetchMachineProfiles();
-  }, []);
+  }, [activeFilter, dateFilter]); // Fetch data when activeFilter or dateFilter changes
 
   const fetchMachineProfiles = async () => {
+    const requestPayload = {
+      datacore: "MACHINE",
+      folder: "MACHINEPROFILE",
+      command: "SELECT",
+      group: "XCYTUA",
+      property: "PJLBBS",
+      fields:
+        "id, objecttype, objectgroup, objectid, objectcode, objectstatus, objectname, description, registereddate, registeredno, registeredby, countryoforigin, dob, sex, documentno, vendor, notes, photogalery_1, photogalery_2, photogalery_3, photogalery_4, photogalery_5, video, active",
+      pageno: "0",
+      recordperpage: "9999999999",
+      condition: {
+        active: {
+          operator: "eq",
+          value: activeFilter,
+        },
+      },
+    };
+
+    const message = JSON.stringify(requestPayload, null, 2);
+    const encryptedMessage = encryptMessage(message);
+
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date().toISOString(),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+
     try {
-      const response = await axios.get("/api/machineprofile");
-      const sortedMachineProfiles = response.data.sort(
-        (a: MachineProfile, b: MachineProfile) => a.id - b.id
-      );
-      setMachineProfiles(sortedMachineProfiles);
+      const response = await axios.post("/api", payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const decryptedMessage = decryptMessage(response.data.message);
+      const result = JSON.parse(decryptedMessage);
+
+      if (Array.isArray(result.data)) {
+        // Sorting berdasarkan dateFilter
+        const sortedMachineProfiles = result.data.sort(
+          (a: MachineProfile, b: MachineProfile) => {
+            if (dateFilter === "newest") {
+              return b.id - a.id; // Terbaru
+            } else {
+              return a.id - b.id; // Terlama
+            }
+          }
+        );
+        setMachineProfiles(sortedMachineProfiles);
+      } else {
+        console.error("Data yang diterima bukan array:", result);
+      }
     } catch (err) {
       console.error("Error fetching machine profiles:", err);
     }
@@ -87,102 +113,293 @@ const MachineProfileData: React.FC = () => {
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
+    setCurrentPage(1);
   };
 
   const handleEditClick = (machineProfile: MachineProfile) => {
     setSelectedMachineProfile(machineProfile);
-    setEditModalOpen(true);
+    setModalOpen(true);
   };
 
-  const handleAddClick = () => {
-    setAddModalOpen(true);
+  const handleAdd = () => {
+    fetchMachineProfiles();
+    setAddModalOpen(false);
   };
 
   const handleUpdate = () => {
     fetchMachineProfiles();
   };
 
+  const filteredItems = machineProfiles.filter(
+    (machineProfile) =>
+      machineProfile.objecttype
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      machineProfile.objectgroup
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      machineProfile.objectid
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      machineProfile.objectcode
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      machineProfile.objectname
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      machineProfile.vendor.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(filteredItems);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Machine Profiles");
+    XLSX.writeFile(workbook, "FilteredMachineProfiles.xlsx");
+  };
+
   return (
-    <div className="container mx-auto mt-4 p-4">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-        <button
-          onClick={handleAddClick}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-2 sm:mb-0"
-        >
-          Add Data
-        </button>
-        <input
-          type="text"
-          placeholder="Search object name..."
-          value={searchQuery}
-          onChange={handleSearch}
-          className="border border-gray-300 px-4 py-2 rounded shadow-sm w-full sm:w-1/3"
-        />
-      </div>
-      <div className="overflow-x-auto">
-        <div className="max-w-5xl overflow-x-auto">
-          <table className="min-w-max bg-white border border-gray-300 rounded-lg shadow-sm">
-            <thead className="bg-gray-100 border-b border-gray-300">
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300 w-full">
+      <header className="p-6 bg-[#385878] text-white">
+        <h1 className="text-3xl font-semibold flex items-center gap-2">
+          Machine Profile Data
+          <Question
+            size={32}
+            weight="regular"
+            className="cursor-pointer duration-200 hover:scale-105" // Tambahkan kelas di sini
+            onClick={() => setGuideModalOpen(true)}
+          />
+        </h1>
+      </header>
+      <main className="flex flex-col flex-1 overflow-hidden p-6">
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+          >
+            Add Data
+          </button>
+          <div className="flex items-center gap-4">
+            {/* Dropdown untuk filter Terbaru dan Terlama */}
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="border border-gray-300 px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-[#385878]"
+            >
+              <option value="newest">Latest</option>
+              <option value="oldest">Oldest</option>
+            </select>
+            {/* Dropdown untuk filter Active dan Inactive */}
+            <select
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value)}
+              className="border border-gray-300 px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-[#385878]"
+            >
+              <option value="Y">Active</option>
+              <option value="N">Inactive</option>
+            </select>
+
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={handleSearch}
+              className="border border-gray-300 px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-[#385878]"
+            />
+
+            <button
+              onClick={exportToExcel}
+              className="bg-green-500 text-white px-4 py-2 flex items-center gap-2 rounded-lg hover:bg-green-600 transform hover:scale-105 transition-transform duration-200"
+            >
+              Export to
+              <FileXls size={20} weight="bold" />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-x-auto max-w">
+          <table className="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+            <thead className="bg-gray-100 text-gray-800 border-b">
               <tr>
-                {columns.map((column) => (
-                  <th key={column.key} className="py-3 px-2 text-left">
-                    <div className="flex items-center">
-                      <span className="truncate">{column.name}</span>
-                      <ResizableBox
-                        width={80}
-                        height={20}
-                        axis="x"
-                        minConstraints={[40, 20]}
-                        maxConstraints={[200, 20]}
-                        className="ml-2"
-                      >
-                        <div className="w-full h-full cursor-col-resize " />
-                      </ResizableBox>
-                    </div>
-                  </th>
-                ))}
-                <th className="py-3 px-2 text-left">Actions</th>
+                <th className="py-4 px-6 text-left">No</th>
+                <th className="py-4 px-6 text-left">Object Type</th>
+                <th className="py-4 px-6 text-left">Object Group</th>
+                <th className="py-4 px-6 text-left">Object ID</th>
+                <th className="py-4 px-6 text-left">Object Code</th>
+                <th className="py-4 px-6 text-left">Object Status</th>
+                <th className="py-4 px-6 text-left">Object Name</th>
+                <th className="py-4 px-6 text-left">Description</th>
+                <th className="py-4 px-6 text-left">Registered Date</th>
+                <th className="py-4 px-6 text-left">Registered No</th>
+                <th className="py-4 px-6 text-left">Registered By</th>
+                <th className="py-4 px-6 text-left">Country of Origin</th>
+                <th className="py-4 px-6 text-left">DOB</th>
+                <th className="py-4 px-6 text-left">Sex</th>
+                <th className="py-4 px-6 text-left">Document No</th>
+                <th className="py-4 px-6 text-left">Vendor</th>
+                <th className="py-4 px-6 text-left">Notes</th>
+                <th className="py-4 px-6 text-left">Photo Gallery 1</th>
+                <th className="py-4 px-6 text-left">Photo Gallery 2</th>
+                <th className="py-4 px-6 text-left">Photo Gallery 3</th>
+                <th className="py-4 px-6 text-left">Photo Gallery 4</th>
+                <th className="py-4 px-6 text-left">Photo Gallery 5</th>
+                <th className="py-4 px-6 text-left">Video</th>
+                <th className="py-4 px-6 text-left">Active</th>
+                <th className="py-4 px-6 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {machineProfiles
-                .filter((profile) =>
-                  profile.objectname
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-                )
-                .map((profile) => (
-                  <tr key={profile.id} className="hover:bg-gray-100">
-                    {columns.map((column) => (
-                      <td key={column.key} className="py-2 px-2 border-b">
-                        {profile[column.key as keyof MachineProfile] || "-"}
-                      </td>
-                    ))}
-                    <td className="py-2 px-2 border-b">
-                      <button
-                        onClick={() => handleEditClick(profile)}
-                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+              {currentItems.map((machineProfile, index) => (
+                <tr key={machineProfile.id} className="hover:bg-[#3858780d]">
+                  <td className="py-4 px-6 border-b text-center w-12">
+                    {indexOfFirstItem + index + 1}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.objecttype}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.objectgroup}
+                  </td>
+                  <td className="py-4 px-6 border-b text-center w-24">
+                    {machineProfile.objectid}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.objectcode}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.objectstatus}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.objectname}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.description}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.registereddate}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.registeredno}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.registeredby}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.countryoforigin}
+                  </td>
+                  <td className="py-4 px-6 border-b">{machineProfile.dob}</td>
+                  <td className="py-4 px-6 border-b">{machineProfile.sex}</td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.documentno}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.vendor}
+                  </td>
+                  <td className="py-4 px-6 border-b">{machineProfile.notes}</td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.photogalery_1}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.photogalery_2}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.photogalery_3}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.photogalery_4}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    {machineProfile.photogalery_5}
+                  </td>
+                  <td className="py-4 px-6 border-b">{machineProfile.video}</td>
+                  <td className="py-4 px-6 border-b text-center w-24">
+                    {machineProfile.active}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    <button
+                      onClick={() => handleEditClick(machineProfile)}
+                      className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      </div>
-      {addModalOpen && (
-        <AddMachineProfileModal
-          onClose={() => setAddModalOpen(false)}
+
+        {/* Pagination Controls */}
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`mx-1 px-3 py-1 ${
+              currentPage === 1
+                ? "opacity-50 cursor-not-allowed"
+                : "text-gray-700 hover:text-[#385878]"
+            }`}
+          >
+            &lt;
+          </button>
+
+          {Array.from({ length: totalPages }, (_, index) => {
+            const pageNumber = index + 1;
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => handlePageChange(pageNumber)}
+                className={`mx-1 px-3 py-1 transition-colors duration-200 ${
+                  currentPage === pageNumber
+                    ? "text-white bg-[#385878] rounded-full"
+                    : "text-gray-700 hover:text-white hover:bg-[#385878] rounded-full"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`mx-1 px-3 py-1 ${
+              currentPage === totalPages
+                ? "opacity-50 cursor-not-allowed"
+                : "text-gray-700 hover:text-[#385878]"
+            }`}
+          >
+            &gt;
+          </button>
+        </div>
+      </main>
+      {modalOpen && selectedMachineProfile && (
+        <EditMachineProfileModal
+          machineProfile={selectedMachineProfile}
+          onClose={() => setModalOpen(false)}
           onUpdate={handleUpdate}
         />
       )}
-      {editModalOpen && selectedMachineProfile && (
-        <EditMachineProfileModal
-          machineProfile={selectedMachineProfile}
-          onClose={() => setEditModalOpen(false)}
-          onUpdate={handleUpdate}
+      {addModalOpen && (
+        <AddMachineProfileModal
+          isOpen={addModalOpen}
+          onClose={() => setAddModalOpen(false)}
+          onAdd={handleAdd}
+        />
+      )}
+
+      {guideModalOpen && (
+        <MachineProfileGuide
+          isOpen={guideModalOpen}
+          onClose={() => setGuideModalOpen(false)}
         />
       )}
     </div>

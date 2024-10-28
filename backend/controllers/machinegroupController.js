@@ -1,9 +1,17 @@
 import pool from "../database/db.js";
+import { decryptMessage, encryptMessage } from "../utils/encryptionUtils.js";
 
+// Create a new machine group
 export const createMachineGroup = async (req, res) => {
-  const { objecttype_id, objectgroup, description, active } = req.body;
+  const { message } = req.body;
 
   try {
+    // Dekripsi pesan yang diterima dari frontend
+    const decryptedMessage = decryptMessage(message);
+    const { objecttype_id, objectgroup, description, active } =
+      JSON.parse(decryptedMessage).record;
+
+    // Insert data ke database
     const insertQuery = `
       INSERT INTO machine.machinegroup (objecttype_id, objectgroup, description, active)
       VALUES ($1, $2, $3, $4) RETURNING *
@@ -14,7 +22,40 @@ export const createMachineGroup = async (req, res) => {
       description,
       active,
     ]);
-    res.status(201).json(result.rows[0]);
+
+    const insertedData = result.rows[0]; // Data yang berhasil di-insert
+
+    // Membuat objek yang hanya menyertakan field selain 'id'
+    const responseData = {
+      objecttype_id: insertedData.objecttype_id,
+      objectgroup: insertedData.objectgroup,
+      description: insertedData.description,
+      active: insertedData.active,
+    };
+
+    // Enkripsi data yang baru dimasukkan ke database, dalam format JSON dengan indentation
+    const encryptedMessage = encryptMessage(
+      JSON.stringify(responseData, null, 2)
+    );
+
+    // Membuat uniqueid
+    const uniqueid = process.env.IV; // Sesuai dengan yang disimpan di .env atau kunci unik lainnya
+
+    // Mendapatkan timestamp dalam format YYYYMMDDHHMMSS
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:.TZ]/g, "")
+      .slice(0, 14);
+
+    // Format JSON response
+    const response = {
+      uniqueid: uniqueid,
+      timestamp: timestamp,
+      code: "200",
+      message: encryptedMessage,
+    };
+
+    res.status(201).json(response); // Mengirimkan respons
   } catch (err) {
     console.error(err.message);
     res
@@ -23,6 +64,7 @@ export const createMachineGroup = async (req, res) => {
   }
 };
 
+// Get all machine groups
 export const getMachineGroups = async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM machine.machinegroup");
@@ -35,13 +77,24 @@ export const getMachineGroups = async (req, res) => {
   }
 };
 
+// Update an existing machine group
+// Update an existing machine group
 export const updateMachineGroup = async (req, res) => {
-  const { id } = req.params;
-  const { objecttype_id, objectgroup, description, active } = req.body;
+  const { message } = req.body;
 
   try {
+    // Dekripsi pesan yang diterima dari frontend
+    const decryptedMessage = decryptMessage(message);
+
+    // Ambil record dan condition dari pesan yang didekripsi
+    const { record, condition } = JSON.parse(decryptedMessage);
+    const { objecttype_id, objectgroup, description, active } = record;
+    const { id } = condition; // Mengambil ID dari condition
+
+    // Update data ke database berdasarkan ID
     const updateQuery = `
-      UPDATE machine.machinegroup SET objecttype_id = $1, objectgroup = $2, description = $3, active = $4
+      UPDATE machine.machinegroup
+      SET objecttype_id = $1, objectgroup = $2, description = $3, active = $4
       WHERE id = $5 RETURNING *
     `;
     const result = await pool.query(updateQuery, [
@@ -53,14 +106,35 @@ export const updateMachineGroup = async (req, res) => {
     ]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Machine group not found" });
+      return res.status(404).json({
+        error: "Machine group not found",
+      });
     }
 
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err.message);
-    res
-      .status(500)
-      .json({ error: "An error occurred while updating the machine group" });
+    const updatedData = result.rows[0];
+
+    // Hapus ID dari data yang akan dikirim ke frontend
+    const { id: removedId, ...dataWithoutId } = updatedData;
+
+    // Enkripsi data yang berhasil di-update tanpa ID
+    const encryptedMessage = encryptMessage(
+      JSON.stringify(dataWithoutId, null, 2)
+    );
+
+    // Response format
+    const response = {
+      uniqueid: process.env.IV, // Sesuaikan dengan uniqueid
+      timestamp: new Date()
+        .toISOString()
+        .replace(/[-:.TZ]/g, "")
+        .slice(0, 14),
+      code: "200",
+      message: encryptedMessage,
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error("Error updating machine group:", error);
+    res.status(500).json({ error: "Failed to update machine group" });
   }
 };

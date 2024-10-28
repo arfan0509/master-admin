@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-
-interface EditMachineProfileModalProps {
-  machineProfile: MachineProfile;
-  onClose: () => void;
-  onUpdate: () => void;
-}
+import { encryptMessage } from "../utils/encryptionUtils";
+import {
+  fetchMachineTypes,
+  fetchMachineGroups,
+  fetchMachineIds,
+  fetchMachineDetails,
+} from "../utils/dropdownUtils";
+import { countries } from "../utils/countries";
+import { shortenUrl, uploadToCloudinary } from "../utils/cloudinaryUtils";
 
 interface MachineProfile {
   id: number;
-  objecttype_id: number;
-  objectgroup_id: number;
-  objectid_id: number;
-  objectcode_id: number;
-  objectname: string;
+  objecttype: string;
+  objectgroup: string;
+  objectid: string;
+  objectcode: string;
   objectstatus: string;
+  objectname: string;
   description: string;
   registereddate: string;
   registeredno: string;
@@ -23,7 +26,7 @@ interface MachineProfile {
   dob: string;
   sex: string;
   documentno: string;
-  vendor_id: string;
+  vendor: string;
   notes: string;
   photogalery_1: string;
   photogalery_2: string;
@@ -34,386 +37,619 @@ interface MachineProfile {
   active: string;
 }
 
+interface EditMachineProfileModalProps {
+  machineProfile: MachineProfile;
+  onClose: () => void;
+  onUpdate: () => void;
+}
+
 const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
   machineProfile,
   onClose,
   onUpdate,
 }) => {
-  const [formData, setFormData] = useState<MachineProfile>({
-    ...machineProfile,
+  const [formData, setFormData] = useState({
+    id: machineProfile.id,
+    objecttype: machineProfile.objecttype,
+    objectgroup: machineProfile.objectgroup,
+    objectid: machineProfile.objectid,
+    objectcode: machineProfile.objectcode,
+    objectstatus: machineProfile.objectstatus,
+    objectname: machineProfile.objectname,
+    description: machineProfile.description,
+    registereddate: machineProfile.registereddate.replace(/\//g, "-"),
+    registeredno: machineProfile.registeredno,
+    registeredby: machineProfile.registeredby,
+    countryoforigin: machineProfile.countryoforigin,
+    dob: machineProfile.dob,
+    sex: machineProfile.sex,
+    documentno: machineProfile.documentno,
+    vendor: machineProfile.vendor,
+    notes: machineProfile.notes,
+    photogalery_1: machineProfile.photogalery_1,
+    photogalery_2: machineProfile.photogalery_2,
+    photogalery_3: machineProfile.photogalery_3,
+    photogalery_4: machineProfile.photogalery_4,
+    photogalery_5: machineProfile.photogalery_5,
+    video: machineProfile.video,
+    active: machineProfile.active,
   });
 
-  const [objecttypes, setObjecttypes] = useState<any[]>([]);
-  const [objectgroups, setObjectgroups] = useState<any[]>([]);
-  const [objectids, setObjectids] = useState<any[]>([]);
-  const [objectcodes, setObjectcodes] = useState<any[]>([]);
-  const [vendors, setVendors] = useState<any[]>([]);
-  const [objectname, setObjectname] = useState(machineProfile.objectname);
-
-  useEffect(() => {
-    setFormData({ ...machineProfile });
-  }, [machineProfile]);
+  const [machineTypes, setMachineTypes] = useState<
+    { id: number; objecttype: string }[]
+  >([]);
+  const [machineGroups, setMachineGroups] = useState<
+    { id: number; objecttype: string; objectgroup: string }[]
+  >([]);
+  const [filteredMachineGroups, setFilteredMachineGroups] = useState<
+    { id: number; objecttype: string; objectgroup: string }[]
+  >([]);
+  const [machineIds, setMachineIds] = useState<
+    { id: string; objectid: string; objectgroup: string }[]
+  >([]);
+  const [filteredMachineIds, setFilteredMachineIds] = useState<
+    { id: string; objectid: string }[]
+  >([]);
+  const [objectCodes, setObjectCodes] = useState<
+    { id: string; objectcode: string; objectid: string; objectname: string }[]
+  >([]);
+  const [filteredObjectCodes, setFilteredObjectCodes] = useState<
+    { id: string; objectcode: string }[]
+  >([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [typesRes, groupsRes, idsRes, codesRes, vendorsRes] =
-          await Promise.all([
-            axios.get("/api/machinetype"),
-            axios.get("/api/machinegroup"),
-            axios.get("/api/machineid"),
-            axios.get("/api/machinedetail"),
-            axios.get("/api/vendors"),
-          ]);
-
-        setObjecttypes(typesRes.data);
-        setObjectgroups(groupsRes.data);
-        setObjectids(idsRes.data);
-        setObjectcodes(codesRes.data);
-        setVendors(vendorsRes.data); // Memastikan vendorsRes ada
+        const [types, groups, ids, codes] = await Promise.all([
+          fetchMachineTypes(),
+          fetchMachineGroups(),
+          fetchMachineIds(),
+          fetchMachineDetails(),
+        ]);
+        setMachineTypes(types);
+        setMachineGroups(groups);
+        setMachineIds(ids);
+        setObjectCodes(codes);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
 
     fetchData();
-  }, []);
+  }, [machineProfile]);
 
   useEffect(() => {
-    const fetchObjectName = async () => {
-      if (formData.objectcode_id) {
-        try {
-          const response = await axios.get(
-            `/api/machinedetail/${formData.objectcode_id}`
-          );
-          const fetchedObjectName = response.data.objectname;
-          setObjectname(fetchedObjectName);
-          setFormData((prevData) => ({
-            ...prevData,
-            objectname: fetchedObjectName,
-          }));
-        } catch (error) {
-          console.error("Error fetching object name:", error);
-        }
-      }
-    };
+    if (formData.objecttype) {
+      const filteredGroups = machineGroups.filter(
+        (group) => group.objecttype === formData.objecttype
+      );
+      setFilteredMachineGroups(filteredGroups);
+    }
+  }, [formData.objecttype, machineGroups]);
 
-    fetchObjectName();
-  }, [formData.objectcode_id]);
+  useEffect(() => {
+    if (formData.objectgroup) {
+      const filteredIds = machineIds.filter(
+        (id) => id.objectgroup === formData.objectgroup
+      );
+      setFilteredMachineIds(filteredIds);
+    } else {
+      setFilteredMachineIds([]);
+    }
+  }, [formData.objectgroup, machineIds]);
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const year = date.getFullYear();
-    const month = `0${date.getMonth() + 1}`.slice(-2);
-    const day = `0${date.getDate()}`.slice(-2);
-    return `${year}-${month}-${day}`;
+  useEffect(() => {
+    if (formData.objectid) {
+      const filteredCodes = objectCodes.filter(
+        (code) => code.objectid === formData.objectid
+      );
+      setFilteredObjectCodes(filteredCodes);
+    } else {
+      setFilteredObjectCodes([]);
+    }
+  }, [formData.objectid, objectCodes]);
+
+  // Update objectname when objectcode changes
+  useEffect(() => {
+    const selectedCode = objectCodes.find(
+      (code) => code.objectcode === formData.objectcode
+    );
+    if (selectedCode) {
+      setFormData((prevData) => ({
+        ...prevData,
+        objectname: selectedCode.objectname,
+      }));
+    }
+  }, [formData.objectcode, objectCodes]);
+
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const newFiles = [...imageFiles];
+      newFiles[index] = files[0]; // Menyimpan file baru di array
+      setImageFiles(newFiles);
+
+      // Mengupdate URL di formData jika ada
+      setFormData((prevData) => ({
+        ...prevData,
+        [`photogalery_${index + 1}`]: "", // Reset URL gambar yang diubah
+      }));
+    }
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleSubmit = async () => {
-    try {
-      const formattedDOB = formData.dob ? formatDate(formData.dob) : "";
+  const formatDate = (date: string, format: string): string => {
+    const d = new Date(date);
 
-      await axios.put(`/api/machineprofile/${machineProfile.id}`, {
-        ...formData,
-        dob: formattedDOB,
-      });
+    if (format === "registereddate") {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}/${month}/${day}`; // Kembalikan dalam format yyyy/mm/dd
+    }
+
+    if (format === "dob") {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const hours = String(d.getHours()).padStart(2, "0");
+      const minutes = String(d.getMinutes()).padStart(2, "0");
+      const seconds = String(d.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.0`; // Tetap menggunakan format datetime yang benar
+    }
+
+    return date;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Upload images to Cloudinary and get the shortened URLs
+    const imageUrls: string[] = [];
+    for (const [index, file] of imageFiles.entries()) {
+      if (file) {
+        // Pastikan ada file yang dipilih
+        const uploadUrl = await uploadToCloudinary(file);
+        if (uploadUrl) {
+          const shortenedUrl = await shortenUrl(uploadUrl); // Mendapatkan URL pendek
+          imageUrls.push(shortenedUrl);
+
+          // Update formData with the shortened URL
+          setFormData((prevData) => ({
+            ...prevData,
+            [`photogalery_${index + 1}`]: shortenedUrl, // Menyimpan URL pendek
+          }));
+
+          console.log("Shortened URL:", shortenedUrl);
+        } else {
+          imageUrls.push(""); // Jika upload gagal, tambahkan string kosong
+        }
+      } else {
+        imageUrls.push(formData[`photogalery_${index + 1}`]); // Jika tidak ada file baru, gunakan URL yang sudah ada
+      }
+    }
+
+    // Pastikan data yang benar dalam formData
+    console.log("Form Data before submission:", formData);
+
+    const jsonData = {
+      datacore: "MACHINE",
+      folder: "MACHINEPROFILE",
+      command: "UPDATE",
+      group: "XCYTUA",
+      property: "PJLBBS",
+      record: {
+        objecttype: `'${formData.objecttype}'`,
+        objectgroup: `'${formData.objectgroup}'`,
+        objectid: `'${formData.objectid}'`,
+        objectcode: `'${formData.objectcode.trim()}'`, // Terapkan trim di sini
+        objectstatus: `'${formData.objectstatus}'`,
+        objectname: `'${formData.objectname}'`,
+        description: `'${formData.description}'`,
+        registereddate: `'${formatDate(
+          formData.registereddate,
+          "registereddate"
+        )}'`, // Tambahkan tanda petik
+        registeredno: `'${formData.registeredno}'`,
+        registeredby: `'${formData.registeredby}'`,
+        countryoforigin: `'${formData.countryoforigin}'`,
+        dob: `'${formatDate(formData.dob, "dob")}'`, // Tambahkan tanda petik
+        sex: `'${formData.sex}'`,
+        documentno: `'${formData.documentno}'`,
+        vendor: `'${formData.vendor}'`,
+        notes: `'${formData.notes}'`,
+        photogalery_1: `'${formData.photogalery_1}'`,
+        photogalery_2: `'${formData.photogalery_2}'`,
+        photogalery_3: `'${formData.photogalery_3}'`,
+        photogalery_4: `'${formData.photogalery_4}'`,
+        photogalery_5: `'${formData.photogalery_5}'`,
+        video: `'${formData.video}'`,
+        active: formData.active,
+      },
+      condition: {
+        id: {
+          operator: "eq",
+          value: formData.id,
+        },
+      },
+    };
+
+    const jsonString = JSON.stringify(jsonData, null, 2);
+    const encryptedMessage = encryptMessage(jsonString);
+
+    const payload = {
+      apikey: "06EAAA9D10BE3D4386D10144E267B681",
+      uniqueid: "JFKlnUZyyu0MzRqj",
+      timestamp: new Date().toISOString(),
+      localdb: "N",
+      message: encryptedMessage,
+    };
+    console.log(payload);
+
+    try {
+      await axios.post("/api", payload);
+      alert("Machine profile updated successfully!");
       onUpdate();
       onClose();
-    } catch (err) {
-      console.error("Error updating machine profile:", err);
+    } catch (error) {
+      console.error("Error updating machine profile:", error);
     }
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg overflow-y-auto max-h-full p-6">
-        <h2 className="text-2xl font-bold mb-4">Edit Machine Profile</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div
+        className="fixed inset-0 bg-black opacity-50"
+        onClick={onClose}
+      ></div>
+      <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
+        <h2 className="text-xl font-bold mb-4">Edit Machine Profile</h2>
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+        >
           <div>
-            <label className="block font-medium mb-2">Object Type ID</label>
+            <label className="block">Object Type</label>
             <select
-              name="objecttype_id"
-              value={formData.objecttype_id}
+              name="objecttype"
+              value={formData.objecttype}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
             >
               <option value="">Select Object Type</option>
-              {objecttypes.map((type: any) => (
-                <option key={type.id} value={type.id}>
+              {machineTypes.map((type) => (
+                <option key={type.id} value={type.objecttype}>
                   {type.objecttype}
                 </option>
               ))}
             </select>
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Object Group ID</label>
+            <label className="block">Object Group</label>
             <select
-              name="objectgroup_id"
-              value={formData.objectgroup_id}
+              name="objectgroup"
+              value={formData.objectgroup}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+              disabled={!formData.objecttype}
             >
               <option value="">Select Object Group</option>
-              {objectgroups.map((group: any) => (
-                <option key={group.id} value={group.id}>
-                  {group.objectgroup}
-                </option>
-              ))}
+              {filteredMachineGroups.length > 0 ? (
+                filteredMachineGroups.map((group) => (
+                  <option key={group.id} value={group.objectgroup}>
+                    {group.objectgroup}
+                  </option>
+                ))
+              ) : (
+                <option value="">No available options</option>
+              )}
             </select>
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Object ID</label>
+            <label className="block">Object ID</label>
             <select
-              name="objectid_id"
-              value={formData.objectid_id}
+              name="objectid"
+              value={formData.objectid}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+              disabled={!formData.objectgroup}
             >
               <option value="">Select Object ID</option>
-              {objectids.map((id: any) => (
-                <option key={id.id} value={id.id}>
-                  {id.objectid}
-                </option>
-              ))}
+              {filteredMachineIds.length > 0 ? (
+                filteredMachineIds.map((id) => (
+                  <option key={id.objectid} value={id.objectid}>
+                    {id.objectid}
+                  </option>
+                ))
+              ) : (
+                <option value="">No available options</option>
+              )}
             </select>
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Object Code ID</label>
+            <label className="block">Object Code</label>
             <select
-              name="objectcode_id"
-              value={formData.objectcode_id}
+              name="objectcode"
+              value={formData.objectcode}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+              disabled={!formData.objectid}
             >
               <option value="">Select Object Code</option>
-              {objectcodes.map((code: any) => (
-                <option key={code.id} value={code.id}>
-                  {code.objectcode}
-                </option>
-              ))}
+              {filteredObjectCodes.length > 0 ? (
+                filteredObjectCodes.map((code) => (
+                  <option key={code.objectcode} value={code.objectcode}>
+                    {code.objectcode}
+                  </option>
+                ))
+              ) : (
+                <option value="">No available options</option>
+              )}
             </select>
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Object Name</label>
+            <label className="block">Object Name</label>
             <input
               type="text"
               name="objectname"
-              value={objectname}
-              readOnly
-              className="w-full px-3 py-2 border rounded-lg bg-gray-100"
+              value={formData.objectname}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+              readOnly // Set readOnly jika Anda hanya ingin menampilkan data, tidak bisa diedit langsung
             />
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Object Status</label>
+            <label className="block">Object Status</label>
             <input
               type="text"
               name="objectstatus"
               value={formData.objectstatus}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={1}
+              required
             />
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Description</label>
-            <textarea
+            <label className="block">Description</label>
+            <input
+              type="text"
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Registered Date</label>
+            <label className="block">Registered Date</label>
             <input
-              readOnly
-              type="text"
+              type="date"
               name="registereddate"
               value={formData.registereddate}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg bg-gray-100"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Registered No</label>
+            <label className="block">Registered No</label>
             <input
               type="text"
               name="registeredno"
               value={formData.registeredno}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Registered By</label>
+            <label className="block">Registered By</label>
             <input
               type="text"
               name="registeredby"
               value={formData.registeredby}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Country of Origin</label>
-            <input
-              type="text"
+            <label className="block">Country of Origin</label>
+            <select
               name="countryoforigin"
               value={formData.countryoforigin}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            >
+              <option value="">Select Country</option>
+              {countries.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Date of Birth</label>
+            <label className="block">Date of Birth</label>
             <input
-              type="date"
+              type="datetime-local"
               name="dob"
               value={formData.dob}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Sex</label>
-            <input
-              type="text"
+            <label className="block">Gender</label>
+            <select
               name="sex"
               value={formData.sex}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            >
+              <option value="">Select Gender</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Document No</label>
+            <label className="block">Document No</label>
             <input
               type="text"
               name="documentno"
               value={formData.documentno}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Vendor</label>
-            <select
-              name="vendor_id"
-              value={formData.vendor_id}
+            <label className="block">Vendor</label>
+            <input
+              type="text"
+              name="vendor"
+              value={formData.vendor}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
-            >
-              <option value="">Select Vendor</option>
-              {vendors.map((vendor: any) => (
-                <option key={vendor.id} value={vendor.id}>
-                  {vendor.name}
-                </option>
-              ))}
-            </select>
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
+            />
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Notes</label>
+            <label className="block">Notes</label>
             <textarea
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={50}
+              required
             />
           </div>
+
+          {/* Photo Gallery Inputs */}
+          {[...Array(5)].map((_, index) => (
+            <div key={index}>
+              <label className="block">Photo Gallery {index + 1}</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, index)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              />
+              {formData[`photogalery_${index + 1}`] && (
+                <img
+                  src={formData[`photogalery_${index + 1}`]}
+                  alt={`Photo Gallery ${index + 1}`}
+                  className="mt-2 w-full h-auto rounded-md"
+                />
+              )}
+            </div>
+          ))}
+
           <div>
-            <label className="block font-medium mb-2">Photo Gallery 1</label>
-            <input
-              type="text"
-              name="photogalery_1"
-              value={formData.photogalery_1}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-2">Photo Gallery 2</label>
-            <input
-              type="text"
-              name="photogalery_2"
-              value={formData.photogalery_2}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-2">Photo Gallery 3</label>
-            <input
-              type="text"
-              name="photogalery_3"
-              value={formData.photogalery_3}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-2">Photo Gallery 4</label>
-            <input
-              type="text"
-              name="photogalery_4"
-              value={formData.photogalery_4}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-2">Photo Gallery 5</label>
-            <input
-              type="text"
-              name="photogalery_5"
-              value={formData.photogalery_5}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-2">Video</label>
+            <label className="block">Video</label>
             <input
               type="text"
               name="video"
               value={formData.video}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
             />
           </div>
+
           <div>
-            <label className="block font-medium mb-2">Active</label>
-            <select
-              name="active"
-              value={formData.active}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
-            >
-              <option value="Y">Yes</option>
-              <option value="N">No</option>
-            </select>
+            <label className="block">Active</label>
+            <div className="flex items-center mt-5 space-x-6">
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="active"
+                  value="Y"
+                  checked={formData.active === "Y"}
+                  onChange={handleChange}
+                  className="hidden peer"
+                />
+                <div className="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center peer-checked:bg-[#385878] peer-checked:border-transparent transition duration-200 ease-in-out">
+                  <div className="w-3 h-3 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition duration-200 ease-in-out"></div>
+                </div>
+                <span className="ml-2">Yes</span>
+              </label>
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="active"
+                  value="N"
+                  checked={formData.active === "N"}
+                  onChange={handleChange}
+                  className="hidden peer"
+                />
+                <div className="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center peer-checked:bg-[#385878] peer-checked:border-transparent transition duration-200 ease-in-out">
+                  <div className="w-3 h-3 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition duration-200 ease-in-out"></div>
+                </div>
+                <span className="ml-2">No</span>
+              </label>
+            </div>
           </div>
-        </div>
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-          >
-            Save
-          </button>
-          <button
-            onClick={onClose}
-            className="ml-2 px-4 py-2 bg-gray-500 text-white rounded-lg"
-          >
-            Close
-          </button>
-        </div>
+
+          <div className="col-span-2 flex justify-end mt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+            >
+              Update
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
