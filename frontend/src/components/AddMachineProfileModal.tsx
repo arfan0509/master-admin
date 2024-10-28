@@ -45,6 +45,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
     active: "Y",
   });
 
+  const [isLoading, setIsLoading] = useState(false);
   const [machineTypes, setMachineTypes] = useState<any[]>([]);
   const [machineGroups, setMachineGroups] = useState<any[]>([]);
   const [machineIds, setMachineIds] = useState<any[]>([]);
@@ -220,10 +221,12 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     // Pastikan semua field photogalery terisi
     if (selectedFiles.length < 5) {
       alert("Please upload all 5 images.");
+      setIsLoading(false);
       return;
     }
 
@@ -243,6 +246,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
       } catch (error) {
         console.error(`Error uploading image ${i + 1}:`, error);
         alert("Failed to upload images. Please try again.");
+        setIsLoading(false);
         return; // Keluar jika ada error
       }
     }
@@ -307,14 +311,15 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
     console.log("Encrypted Payload:", JSON.stringify(payload, null, 2));
 
     try {
-      // Send POST request with encrypted payload
       const response = await axios.post("/api", payload);
-
       alert("Machine profile created successfully!");
       onAdd();
       onClose();
     } catch (error) {
       console.error("Error creating machine profile:", error);
+      alert("Failed to create machine profile.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -577,7 +582,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
           </div>
 
           <div>
-            <label className="block">Upload Photos (Max 5)</label>
+            <label className="block">Upload Photos (Required 5 photos)</label>
             <input
               type="file"
               accept="image/*"
@@ -666,9 +671,14 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
             </button>
             <button
               type="submit"
-              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              disabled={isLoading}
+              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200 flex justify-center items-center"
             >
-              Submit
+              {isLoading ? (
+                <div className="animate-spin h-5 w-5 border-4 border-white border-t-transparent rounded-full"></div>
+              ) : (
+                "Submit"
+              )}
             </button>
           </div>
         </form>

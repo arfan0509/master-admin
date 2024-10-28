@@ -8,6 +8,7 @@ import {
   fetchMachineDetails,
 } from "../utils/dropdownUtils";
 import { countries } from "../utils/countries";
+import { shortenUrl, uploadToCloudinary } from "../utils/cloudinaryUtils";
 
 interface MachineProfile {
   id: number;
@@ -161,6 +162,26 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
     }
   }, [formData.objectcode, objectCodes]);
 
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const newFiles = [...imageFiles];
+      newFiles[index] = files[0]; // Menyimpan file baru di array
+      setImageFiles(newFiles);
+
+      // Mengupdate URL di formData jika ada
+      setFormData((prevData) => ({
+        ...prevData,
+        [`photogalery_${index + 1}`]: "", // Reset URL gambar yang diubah
+      }));
+    }
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -195,6 +216,34 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Upload images to Cloudinary and get the shortened URLs
+    const imageUrls: string[] = [];
+    for (const [index, file] of imageFiles.entries()) {
+      if (file) {
+        // Pastikan ada file yang dipilih
+        const uploadUrl = await uploadToCloudinary(file);
+        if (uploadUrl) {
+          const shortenedUrl = await shortenUrl(uploadUrl); // Mendapatkan URL pendek
+          imageUrls.push(shortenedUrl);
+
+          // Update formData with the shortened URL
+          setFormData((prevData) => ({
+            ...prevData,
+            [`photogalery_${index + 1}`]: shortenedUrl, // Menyimpan URL pendek
+          }));
+
+          console.log("Shortened URL:", shortenedUrl);
+        } else {
+          imageUrls.push(""); // Jika upload gagal, tambahkan string kosong
+        }
+      } else {
+        imageUrls.push(formData[`photogalery_${index + 1}`]); // Jika tidak ada file baru, gunakan URL yang sudah ada
+      }
+    }
+
+    // Pastikan data yang benar dalam formData
+    console.log("Form Data before submission:", formData);
 
     const jsonData = {
       datacore: "MACHINE",
@@ -248,6 +297,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
       localdb: "N",
       message: encryptedMessage,
     };
+    console.log(payload);
 
     try {
       await axios.post("/api", payload);
@@ -517,70 +567,25 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
             />
           </div>
 
-          <div>
-            <label className="block">Photo Gallery 1</label>
-            <input
-              type="text"
-              name="photogalery_1"
-              value={formData.photogalery_1}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              maxLength={36}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block">Photo Gallery 2</label>
-            <input
-              type="text"
-              name="photogalery_2"
-              value={formData.photogalery_2}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              maxLength={36}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block">Photo Gallery 3</label>
-            <input
-              type="text"
-              name="photogalery_3"
-              value={formData.photogalery_3}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              maxLength={36}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block">Photo Gallery 4</label>
-            <input
-              type="text"
-              name="photogalery_4"
-              value={formData.photogalery_4}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              maxLength={36}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block">Photo Gallery 5</label>
-            <input
-              type="text"
-              name="photogalery_5"
-              value={formData.photogalery_5}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              maxLength={36}
-              required
-            />
-          </div>
+          {/* Photo Gallery Inputs */}
+          {[...Array(5)].map((_, index) => (
+            <div key={index}>
+              <label className="block">Photo Gallery {index + 1}</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, index)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              />
+              {formData[`photogalery_${index + 1}`] && (
+                <img
+                  src={formData[`photogalery_${index + 1}`]}
+                  alt={`Photo Gallery ${index + 1}`}
+                  className="mt-2 w-full h-auto rounded-md"
+                />
+              )}
+            </div>
+          ))}
 
           <div>
             <label className="block">Video</label>

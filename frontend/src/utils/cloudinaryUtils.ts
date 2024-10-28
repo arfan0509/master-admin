@@ -20,15 +20,26 @@ export const uploadToCloudinary = async (file: File): Promise<string | null> => 
   }
 };
 
-// Fungsi untuk memendekkan URL menggunakan TinyURL
+// Fungsi untuk memendekkan URL menggunakan Bitly
 export const shortenUrl = async (longUrl: string): Promise<string> => {
+  const accessToken = 'af61e8f8ab4ff815bcf04ccb9319e31f516924d1'; // Access token Bitly Anda
   try {
-    const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
+    const response = await fetch('https://api-ssl.bitly.com/v4/shorten', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`, // Menggunakan Bearer token untuk otentikasi
+      },
+      body: JSON.stringify({ long_url: longUrl }), // Mengirim URL panjang dalam body permintaan
+    });
+    
     if (!response.ok) throw new Error('Network response was not ok');
-    const shortUrl = await response.text();
-    return shortUrl; // Kembalikan URL pendek
+    
+    const data = await response.json();
+    return data.link; // Kembalikan URL pendek
   } catch (error) {
     console.error('Error shortening URL:', error);
     return longUrl; // Kembalikan URL asli jika ada kesalahan
   }
 };
+
