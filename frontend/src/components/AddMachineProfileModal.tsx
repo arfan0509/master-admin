@@ -8,7 +8,8 @@ import {
   fetchMachineDetails,
 } from "../utils/dropdownUtils";
 import { countries } from "../utils/countries";
-import { shortenUrl, uploadToCloudinary } from "../utils/cloudinaryUtils";
+import Tour from "reactour"; // Import React Tour
+import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
 
 interface AddMachineProfileModalProps {
   onClose: () => void;
@@ -52,54 +53,6 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
   const [filteredMachineGroups, setFilteredMachineGroups] = useState<any[]>([]);
   const [filteredMachineIds, setFilteredMachineIds] = useState<any[]>([]);
   const [filteredObjectCodes, setFilteredObjectCodes] = useState<any[]>([]);
-
-  const [imagePreviews, setImagePreviews] = useState<string[]>(
-    Array(5).fill("")
-  ); // Inisialisasi dengan array kosong
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // State untuk menyimpan file yang dipilih
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    const newSelectedFiles: File[] = [];
-    const newPreviews = [...imagePreviews]; // Buat salinan dari preview saat ini
-
-    // Loop untuk memproses setiap file yang dipilih
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-
-      // Tambahkan file baru ke selectedFiles jika belum ada
-      if (!selectedFiles.includes(file)) {
-        newSelectedFiles.push(file);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          // Temukan index pertama yang kosong untuk menambahkan preview
-          const emptyIndex = newPreviews.findIndex((preview) => preview === "");
-          if (emptyIndex !== -1) {
-            newPreviews[emptyIndex] = reader.result as string; // Simpan URL data gambar
-            setImagePreviews(newPreviews);
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    setSelectedFiles([...selectedFiles, ...newSelectedFiles]); // Update selected files
-  };
-
-  const handleRemoveImage = (index: number) => {
-    const updatedPreviews = [...imagePreviews];
-    const updatedFiles = [...selectedFiles];
-
-    // Hapus preview gambar yang dipilih
-    updatedPreviews[index] = "";
-    updatedFiles.splice(index, 1); // Hapus file dari selectedFiles
-
-    // Update state
-    setImagePreviews(updatedPreviews);
-    setSelectedFiles(updatedFiles);
-  };
 
   // Fetch initial data
   useEffect(() => {
@@ -180,6 +133,107 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
     }
   };
 
+  const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const steps = [
+    {
+      selector: ".objecttype-input",
+      content:
+        "Pilih tipe objek yang relevan. Pastikan untuk memilih tipe yang sesuai dengan profil mesin.",
+    },
+    {
+      selector: ".objectgroup-input",
+      content:
+        "Pilih grup objek yang sesuai. Pilihan ini akan aktif setelah Object Type dipilih.",
+    },
+    {
+      selector: ".objectid-input",
+      content:
+        "Pilih Object ID yang terkait. Opsi ini akan aktif setelah Object Group dipilih.",
+    },
+    {
+      selector: ".objectcode-input",
+      content:
+        "Pilih kode objek yang sesuai. Opsi ini hanya aktif setelah Object ID dipilih.",
+    },
+    {
+      selector: ".objectname-input",
+      content:
+        "Nama objek akan tampil di sini. Bagian ini bersifat hanya baca dan tidak dapat diedit.",
+    },
+    {
+      selector: ".objectstatus-input",
+      content:
+        "Masukkan status objek menggunakan satu huruf, misalnya 'A' untuk aktif.",
+    },
+    {
+      selector: ".description-input",
+      content: "Deskripsikan profil mesin ini (maksimal 50 karakter).",
+    },
+    {
+      selector: ".registereddate-input",
+      content: "Pilih tanggal registrasi mesin.",
+    },
+    {
+      selector: ".registeredno-input",
+      content: "Masukkan nomor registrasi mesin.",
+    },
+    {
+      selector: ".registeredby-input",
+      content: "Masukkan nama atau kode pendaftar.",
+    },
+    {
+      selector: ".countryoforigin-input",
+      content: "Pilih negara asal mesin dari daftar negara yang tersedia.",
+    },
+    {
+      selector: ".dob-input",
+      content:
+        "Masukkan tanggal lahir atau tanggal pembuatan mesin (jika relevan).",
+    },
+    {
+      selector: ".sex-input",
+      content:
+        "Pilih jenis kelamin, jika mesin memiliki relevansi tertentu (misalnya pada profil user-driven machine).",
+    },
+    {
+      selector: ".documentno-input",
+      content: "Masukkan nomor dokumen resmi terkait mesin.",
+    },
+    {
+      selector: ".vendor-input",
+      content: "Masukkan nama vendor atau pemasok mesin.",
+    },
+    {
+      selector: ".notes-input",
+      content:
+        "Tambahkan catatan penting atau informasi tambahan mengenai mesin (maksimal 50 karakter).",
+    },
+    {
+      selector: ".photogalery-input",
+      content:
+        "Tambahkan ID gambar galeri untuk dokumentasi visual mesin, di kolom yang tersedia dari 1 hingga 5.",
+    },
+    {
+      selector: ".video-input",
+      content:
+        "Tambahkan ID video terkait mesin untuk dokumentasi lebih lanjut.",
+    },
+    {
+      selector: ".active-radio",
+      content:
+        "Pilih status aktif mesin dengan opsi 'Yes' atau 'No' sesuai kebutuhan.",
+    },
+    {
+      selector: ".submit-button",
+      content:
+        "Klik 'Submit' untuk menambahkan atau menyimpan profil mesin yang telah diisi.",
+    },
+  ];
+
+  const handleStartTour = () => {
+    setIsTourOpen(true); // Mulai tur saat tombol diklik
+  };
+
   const handleChange = async (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -221,36 +275,8 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Pastikan semua field photogalery terisi
-    if (selectedFiles.length < 5) {
-      alert("Please upload all 5 images.");
-      return;
-    }
-
-    // Upload gambar ke Cloudinary dan ambil URL pendek
-    const updatedPhotos: Record<string, string> = {};
-
-    // Upload semua gambar dan ambil short link
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i];
-      try {
-        const imageUrl = await uploadToCloudinary(file);
-        if (imageUrl) {
-          const shortUrl = await shortenUrl(imageUrl);
-          updatedPhotos[`photogalery_${i + 1}`] = shortUrl; // Simpan short URL
-          console.log(`Short URL for image ${i + 1}:`, shortUrl);
-        }
-      } catch (error) {
-        console.error(`Error uploading image ${i + 1}:`, error);
-        alert("Failed to upload images. Please try again.");
-        return; // Keluar jika ada error
-      }
-    }
-
-    // Update formData dengan short link yang baru
-    const updatedFormData = { ...formData, ...updatedPhotos };
-
     // Format data untuk dikirim
+    // Format the data to be sent
     const jsonData = {
       datacore: "MACHINE",
       folder: "MACHINEPROFILE",
@@ -258,32 +284,29 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
       group: "XCYTUA",
       property: "PJLBBS",
       record: {
-        objecttype: updatedFormData.objecttype,
-        objectgroup: updatedFormData.objectgroup,
-        objectid: updatedFormData.objectid,
-        objectcode: updatedFormData.objectcode,
-        objectstatus: updatedFormData.objectstatus,
-        objectname: `'${updatedFormData.objectname}'`,
-        description: `'${updatedFormData.description}'`,
-        registereddate: formatDate(
-          updatedFormData.registereddate,
-          "registereddate"
-        ),
-        registeredno: `'${updatedFormData.registeredno}'`,
-        registeredby: `'${updatedFormData.registeredby}'`,
-        countryoforigin: `'${updatedFormData.countryoforigin}'`,
-        dob: formatDate(updatedFormData.dob, "dob"),
-        sex: `'${updatedFormData.sex}'`,
-        documentno: `'${updatedFormData.documentno}'`,
-        vendor: `'${updatedFormData.vendor}'`,
-        notes: `'${updatedFormData.notes}'`,
-        photogalery_1: `'${updatedFormData.photogalery_1}'`, // Gunakan updatedFormData
-        photogalery_2: `'${updatedFormData.photogalery_2}'`,
-        photogalery_3: `'${updatedFormData.photogalery_3}'`,
-        photogalery_4: `'${updatedFormData.photogalery_4}'`,
-        photogalery_5: `'${updatedFormData.photogalery_5}'`,
-        video: `'${updatedFormData.video}'`,
-        active: updatedFormData.active,
+        objecttype: formData.objecttype,
+        objectgroup: formData.objectgroup,
+        objectid: formData.objectid,
+        objectcode: formData.objectcode,
+        objectstatus: formData.objectstatus,
+        objectname: `'${formData.objectname}'`,
+        description: `'${formData.description}'`,
+        registereddate: formatDate(formData.registereddate, "registereddate"),
+        registeredno: `'${formData.registeredno}'`,
+        registeredby: `'${formData.registeredby}'`,
+        countryoforigin: `'${formData.countryoforigin}'`,
+        dob: formatDate(formData.dob, "dob"),
+        sex: `'${formData.sex}'`,
+        documentno: `'${formData.documentno}'`,
+        vendor: `'${formData.vendor}'`,
+        notes: `'${formData.notes}'`,
+        photogalery_1: `'${formData.photogalery_1}'`,
+        photogalery_2: `'${formData.photogalery_2}'`,
+        photogalery_3: `'${formData.photogalery_3}'`,
+        photogalery_4: `'${formData.photogalery_4}'`,
+        photogalery_5: `'${formData.photogalery_5}'`,
+        video: `'${formData.video}'`,
+        active: formData.active,
       },
     };
 
@@ -304,7 +327,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
 
     // Log JSON and encrypted payload
     // console.log("Original JSON Data:", jsonString);
-    console.log("Encrypted Payload:", JSON.stringify(payload, null, 2));
+    // console.log("Encrypted Payload:", JSON.stringify(payload, null, 2));
 
     try {
       // Send POST request with encrypted payload
@@ -324,8 +347,18 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
         className="fixed inset-0 bg-black opacity-50"
         onClick={onClose}
       ></div>
+      <Tour
+        steps={steps}
+        isOpen={isTourOpen}
+        onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
+      />
       <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Add Machine Profile</h2>
+        <div className="flex items-center justify-between mb-4 pb-5">
+          <h2 className="text-xl font-bold">Add Machine Profile</h2>
+          <button onClick={handleStartTour} className="p-2">
+            <Notebook size={24} />
+          </button>
+        </div>
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 sm:grid-cols-2 gap-4"
@@ -336,7 +369,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="objecttype"
               value={formData.objecttype}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objecttype-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
@@ -354,7 +387,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="objectgroup"
               value={formData.objectgroup}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectgroup-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               disabled={!formData.objecttype}
             >
@@ -377,7 +410,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="objectid"
               value={formData.objectid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectid-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               disabled={!formData.objectgroup}
             >
@@ -400,7 +433,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="objectcode"
               value={formData.objectcode}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectcode-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               disabled={!formData.objectid}
             >
@@ -424,7 +457,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="objectname"
               value={formData.objectname}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectname-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               readOnly // Set readOnly jika Anda hanya ingin menampilkan data, tidak bisa diedit langsung
             />
@@ -437,7 +470,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="objectstatus"
               value={formData.objectstatus}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectstatus-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={1}
               required
             />
@@ -450,7 +483,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="description-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -463,7 +496,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="registereddate"
               value={formData.registereddate}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="registereddate-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -476,7 +509,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="registeredno"
               value={formData.registeredno}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="registeredno-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -489,7 +522,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="registeredby"
               value={formData.registeredby}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="registeredby-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -501,7 +534,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="countryoforigin"
               value={formData.countryoforigin}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="countryoforigin-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Country</option>
@@ -520,7 +553,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="dob"
               value={formData.dob}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="dob-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
 
@@ -530,7 +563,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="sex"
               value={formData.sex}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="sex-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             >
               <option value="">Select Gender</option>
               <option value="M">Male</option>
@@ -545,7 +578,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="documentno"
               value={formData.documentno}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="documentno-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -558,7 +591,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="vendor"
               value={formData.vendor}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="vendor-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -570,43 +603,75 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="notes-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
           </div>
 
           <div>
-            <label className="block">Upload Photos (Max 5)</label>
+            <label className="block">Photo Gallery 1</label>
             <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              multiple
+              type="text"
+              name="photogalery_1"
+              value={formData.photogalery_1}
+              onChange={handleChange}
+              className="photogalery-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
               required
             />
-            <div className="mt-2 flex space-x-2">
-              {imagePreviews.map((preview, index) =>
-                preview ? (
-                  <div key={index} className="relative">
-                    <img
-                      src={preview}
-                      alt={`Preview ${index + 1}`}
-                      className="w-20 h-20 object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(index)}
-                      className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                      title="Remove image"
-                    >
-                      ✖
-                    </button>
-                  </div>
-                ) : null
-              )}
-            </div>
+          </div>
+
+          <div>
+            <label className="block">Photo Gallery 2</label>
+            <input
+              type="text"
+              name="photogalery_2"
+              value={formData.photogalery_2}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block">Photo Gallery 3</label>
+            <input
+              type="text"
+              name="photogalery_3"
+              value={formData.photogalery_3}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block">Photo Gallery 4</label>
+            <input
+              type="text"
+              name="photogalery_4"
+              value={formData.photogalery_4}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block">Photo Gallery 5</label>
+            <input
+              type="text"
+              name="photogalery_5"
+              value={formData.photogalery_5}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              maxLength={36}
+              required
+            />
           </div>
 
           <div>
@@ -616,7 +681,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
               name="video"
               value={formData.video}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="video-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={36}
               required
             />
@@ -624,7 +689,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
 
           <div>
             <label className="block">Active</label>
-            <div className="flex items-center mt-5 space-x-6">
+            <div className="active-radio flex items-center mt-5 space-x-6">
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
@@ -666,7 +731,7 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
             </button>
             <button
               type="submit"
-              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Submit
             </button>

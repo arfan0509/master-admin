@@ -243,21 +243,48 @@ const MachineGroupData: React.FC = () => {
             &lt;
           </button>
 
+          {/* Logic for Pagination with Ellipsis */}
           {Array.from({ length: totalPages }, (_, index) => {
             const pageNumber = index + 1;
-            return (
-              <button
-                key={pageNumber}
-                onClick={() => handlePageChange(pageNumber)}
-                className={`mx-1 px-3 py-1 transition-colors duration-200 ${
-                  currentPage === pageNumber
-                    ? "text-white bg-[#385878] rounded-full"
-                    : "text-gray-700 hover:text-white hover:bg-[#385878] rounded-full"
-                }`}
-              >
-                {pageNumber}
-              </button>
-            );
+            const isPageNearCurrent =
+              pageNumber === 1 ||
+              pageNumber === totalPages ||
+              Math.abs(currentPage - pageNumber) <= 1;
+
+            // Display button if page is near the current page or first/last page
+            if (isPageNearCurrent) {
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber)}
+                  className={`mx-1 px-3 py-1 transition-colors duration-200 ${
+                    currentPage === pageNumber
+                      ? "text-white bg-[#385878] rounded-full"
+                      : "text-gray-700 hover:text-white hover:bg-[#385878] rounded-full"
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            }
+
+            // Display ellipsis button if there’s a gap between the displayed pages
+            const showLeftEllipsis = pageNumber === 2 && currentPage > 3;
+            const showRightEllipsis =
+              pageNumber === totalPages - 1 && currentPage < totalPages - 2;
+
+            if (showLeftEllipsis || showRightEllipsis) {
+              return (
+                <span
+                  key={`ellipsis-${pageNumber}`}
+                  className="mx-1 px-3 py-1 text-gray-700"
+                >
+                  ...
+                </span>
+              );
+            }
+
+            return null;
           })}
 
           <button

@@ -148,7 +148,7 @@ const MachineIdData: React.FC = () => {
   return (
     <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300 max-w-full w-full">
       <header className="p-6 bg-[#385878] text-white">
-      <h1 className="text-3xl font-semibold flex items-center gap-2">
+        <h1 className="text-3xl font-semibold flex items-center gap-2">
           Machine ID Data
           <Question
             size={32}
@@ -264,7 +264,6 @@ const MachineIdData: React.FC = () => {
         </div>
 
         {/* Pagination Controls */}
-        {/* Pagination Controls */}
         <div className="flex justify-center mt-6">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
@@ -278,21 +277,48 @@ const MachineIdData: React.FC = () => {
             &lt;
           </button>
 
+          {/* Logic for Pagination with Ellipsis */}
           {Array.from({ length: totalPages }, (_, index) => {
             const pageNumber = index + 1;
-            return (
-              <button
-                key={pageNumber}
-                onClick={() => handlePageChange(pageNumber)}
-                className={`mx-1 px-3 py-1 transition-colors duration-200 ${
-                  currentPage === pageNumber
-                    ? "text-white bg-[#385878] rounded-full"
-                    : "text-gray-700 hover:text-white hover:bg-[#385878] rounded-full"
-                }`}
-              >
-                {pageNumber}
-              </button>
-            );
+            const isPageNearCurrent =
+              pageNumber === 1 ||
+              pageNumber === totalPages ||
+              Math.abs(currentPage - pageNumber) <= 1;
+
+            // Display button if page is near the current page or first/last page
+            if (isPageNearCurrent) {
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber)}
+                  className={`mx-1 px-3 py-1 transition-colors duration-200 ${
+                    currentPage === pageNumber
+                      ? "text-white bg-[#385878] rounded-full"
+                      : "text-gray-700 hover:text-white hover:bg-[#385878] rounded-full"
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            }
+
+            // Display ellipsis button if there’s a gap between the displayed pages
+            const showLeftEllipsis = pageNumber === 2 && currentPage > 3;
+            const showRightEllipsis =
+              pageNumber === totalPages - 1 && currentPage < totalPages - 2;
+
+            if (showLeftEllipsis || showRightEllipsis) {
+              return (
+                <span
+                  key={`ellipsis-${pageNumber}`}
+                  className="mx-1 px-3 py-1 text-gray-700"
+                >
+                  ...
+                </span>
+              );
+            }
+
+            return null;
           })}
 
           <button

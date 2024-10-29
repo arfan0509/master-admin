@@ -8,6 +8,8 @@ import {
   fetchMachineDetails,
 } from "../utils/dropdownUtils";
 import { countries } from "../utils/countries";
+import Tour from "reactour"; // Import React Tour
+import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
 
 interface MachineProfile {
   id: number;
@@ -161,6 +163,111 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
     }
   }, [formData.objectcode, objectCodes]);
 
+  const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const steps = [
+    {
+      selector: ".objecttype-input",
+      content:
+        "Pilih tipe objek yang relevan jika diperlukan. Pastikan tipe sesuai dengan profil mesin yang akan diperbarui.",
+    },
+    {
+      selector: ".objectgroup-input",
+      content:
+        "Pilih grup objek yang sesuai jika perlu. Pilihan ini aktif setelah Object Type dipilih.",
+    },
+    {
+      selector: ".objectid-input",
+      content:
+        "Pilih atau sesuaikan Object ID jika diperlukan. Opsi ini hanya aktif setelah Object Group dipilih.",
+    },
+    {
+      selector: ".objectcode-input",
+      content:
+        "Pilih kode objek yang sesuai jika perlu. Opsi ini aktif setelah Object ID dipilih.",
+    },
+    {
+      selector: ".objectname-input",
+      content:
+        "Nama objek akan tampil di sini. Bagian ini hanya bisa dibaca dan tidak dapat diedit.",
+    },
+    {
+      selector: ".objectstatus-input",
+      content:
+        "Perbarui status objek menggunakan satu huruf, seperti 'A' untuk aktif, jika perlu.",
+    },
+    {
+      selector: ".description-input",
+      content: "Perbarui deskripsi profil mesin ini, maksimal 50 karakter.",
+    },
+    {
+      selector: ".registereddate-input",
+      content: "Perbarui tanggal registrasi mesin jika perlu.",
+    },
+    {
+      selector: ".registeredno-input",
+      content: "Perbarui nomor registrasi mesin jika diperlukan.",
+    },
+    {
+      selector: ".registeredby-input",
+      content: "Perbarui nama atau kode pendaftar jika perlu.",
+    },
+    {
+      selector: ".countryoforigin-input",
+      content:
+        "Pilih atau sesuaikan negara asal mesin dari daftar yang tersedia jika diperlukan.",
+    },
+    {
+      selector: ".dob-input",
+      content: "Perbarui tanggal lahir atau pembuatan mesin jika relevan.",
+    },
+    {
+      selector: ".sex-input",
+      content:
+        "Pilih jenis kelamin, jika mesin memiliki relevansi khusus (misalnya pada user-driven machine).",
+    },
+    {
+      selector: ".documentno-input",
+      content: "Perbarui nomor dokumen resmi terkait mesin.",
+    },
+    {
+      selector: ".vendor-input",
+      content: "Perbarui nama vendor atau pemasok mesin jika perlu.",
+    },
+    {
+      selector: ".notes-input",
+      content:
+        "Perbarui catatan penting atau informasi tambahan tentang mesin (maksimal 50 karakter).",
+    },
+    {
+      selector: ".photogalery-input",
+      content:
+        "Perbarui ID gambar galeri untuk dokumentasi visual mesin di kolom yang tersedia dari 1 hingga 5.",
+    },
+    {
+      selector: ".video-input",
+      content:
+        "Perbarui ID video terkait mesin untuk dokumentasi tambahan jika diperlukan.",
+    },
+    {
+      selector: ".active-radio",
+      content:
+        "Pilih status aktif mesin dengan opsi 'Yes' atau 'No' sesuai kebutuhan.",
+    },
+    {
+      selector: ".submit-button",
+      content: "Klik 'Update' untuk menyimpan perubahan pada profil mesin.",
+    },
+    {
+      selector: ".cancel-button",
+      content:
+        "Klik 'Cancel' untuk membatalkan perubahan dan keluar dari modal.",
+    },
+  ];
+
+  const handleStartTour = () => {
+    setIsTourOpen(true); // Mulai tur saat tombol diklik
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -265,8 +372,18 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
         className="fixed inset-0 bg-black opacity-50"
         onClick={onClose}
       ></div>
+      <Tour
+        steps={steps}
+        isOpen={isTourOpen}
+        onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
+      />
       <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Edit Machine Profile</h2>
+        <div className="flex items-center justify-between mb-4 pb-5">
+          <h2 className="text-xl font-bold">Edit Machine Profile</h2>
+          <button onClick={handleStartTour} className="p-2">
+            <Notebook size={24} />
+          </button>
+        </div>
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 sm:grid-cols-2 gap-4"
@@ -277,7 +394,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="objecttype"
               value={formData.objecttype}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objecttype-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Object Type</option>
@@ -295,7 +412,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="objectgroup"
               value={formData.objectgroup}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectgroup-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               disabled={!formData.objecttype}
             >
@@ -318,7 +435,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="objectid"
               value={formData.objectid}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectid-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               disabled={!formData.objectgroup}
             >
@@ -341,7 +458,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="objectcode"
               value={formData.objectcode}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectcode-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               disabled={!formData.objectid}
             >
@@ -365,7 +482,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="objectname"
               value={formData.objectname}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectname-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
               readOnly // Set readOnly jika Anda hanya ingin menampilkan data, tidak bisa diedit langsung
             />
@@ -378,7 +495,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="objectstatus"
               value={formData.objectstatus}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="objectstatus-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={1}
               required
             />
@@ -391,7 +508,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="description-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -404,7 +521,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="registereddate"
               value={formData.registereddate}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="registereddate-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -417,7 +534,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="registeredno"
               value={formData.registeredno}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="registeredno-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -430,7 +547,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="registeredby"
               value={formData.registeredby}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="registeredby-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -442,7 +559,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="countryoforigin"
               value={formData.countryoforigin}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="countryoforigin-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
               <option value="">Select Country</option>
@@ -461,7 +578,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="dob"
               value={formData.dob}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="dob-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
 
@@ -471,7 +588,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="sex"
               value={formData.sex}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="sex-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             >
               <option value="">Select Gender</option>
               <option value="M">Male</option>
@@ -486,7 +603,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="documentno"
               value={formData.documentno}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="documentno-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -499,7 +616,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="vendor"
               value={formData.vendor}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="vendor-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -511,7 +628,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="notes-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={50}
               required
             />
@@ -524,7 +641,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="photogalery_1"
               value={formData.photogalery_1}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="photogalery-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={36}
               required
             />
@@ -589,7 +706,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
               name="video"
               value={formData.video}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="video-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               maxLength={36}
               required
             />
@@ -597,7 +714,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
 
           <div>
             <label className="block">Active</label>
-            <div className="flex items-center mt-5 space-x-6">
+            <div className="active-radio flex items-center mt-5 space-x-6">
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
@@ -633,13 +750,13 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="cancel-button mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Update
             </button>
