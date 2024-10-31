@@ -200,17 +200,22 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
           "Content-Type": "application/json",
         },
       });
-
-      if (response.status === 200 || response.status === 201) {
-        alert("Machine ID created successfully!");
-        onAdd();
-        onClose();
-      } else {
-        console.error("Unexpected response status:", response.status);
-        console.error("Response data:", response.data);
+  
+      alert("Machine ID created successfully!");
+      onAdd();
+      onClose();
+  
+      if (response.status == 200) {
+        await axios.post("http://192.168.5.102:3000/notify", {
+          event: "data_inserted",
+        }, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
       }
     } catch (error) {
-      console.error("Error creating Machine ID:", error);
+      console.error("Error adding machine ID:", error);
     }
   };
 

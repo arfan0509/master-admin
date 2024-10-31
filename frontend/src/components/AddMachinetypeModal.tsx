@@ -83,14 +83,27 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
     };
 
     try {
-      const response = await axios.post("/api", payload);
-      console.log("Response from backend:", response.data);
-
-      alert("Machine type created successfully!");
+      const response = await axios.post("/api", payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      alert("Machine group created successfully!");
       onAdd();
       onClose();
+  
+      if (response.status == 200) {
+        await axios.post("http://192.168.5.102:3000/notify", {
+          event: "data_inserted",
+        }, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      }
     } catch (error) {
-      console.error("Error creating machine type:", error);
+      console.error("Error adding machine group:", error);
     }
   };
 

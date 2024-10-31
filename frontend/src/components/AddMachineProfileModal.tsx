@@ -330,14 +330,27 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
     // console.log("Encrypted Payload:", JSON.stringify(payload, null, 2));
 
     try {
-      // Send POST request with encrypted payload
-      const response = await axios.post("/api", payload);
-
-      alert("Machine profile created successfully!");
+      const response = await axios.post("/api", payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      alert("Machine group created successfully!");
       onAdd();
       onClose();
+  
+      if (response.status == 200) {
+        await axios.post("http://192.168.5.102:3000/notify", {
+          event: "data_inserted",
+        }, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      }
     } catch (error) {
-      console.error("Error creating machine profile:", error);
+      console.error("Error adding machine group:", error);
     }
   };
 

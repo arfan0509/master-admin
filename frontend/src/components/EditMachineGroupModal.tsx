@@ -4,6 +4,7 @@ import { encryptMessage } from "../utils/encryptionUtils";
 import { fetchMachineTypes } from "../utils/dropdownUtils";
 import Tour from "reactour"; // Import React Tour
 import { Notebook } from "@phosphor-icons/react";
+import { sendEncryptedRequest } from "../utils/apiUtils";
 
 interface MachineGroup {
   id: number;
@@ -95,164 +96,48 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Format JSON data untuk Machine Group
-    const jsonDataMachineGroup = {
-      datacore: "MACHINE",
-      folder: "MACHINEGROUP",
-      command: "UPDATE",
-      group: "XCYTUA",
-      property: "PJLBBS",
-      record: {
-        objectgroup: `'${formData.objectgroup}'`,
-        description: `'${formData.description}'`,
-        active: `'${formData.active}'`,
-      },
-      condition: {
-        id: {
-          operator: "eq",
-          value: formData.id,
-        },
-      },
+    const record = {
+      objecttype: `'${formData.objecttype}'`,
+      objectgroup: `'${formData.objectgroup}'`,
+      description: `'${formData.description}'`,
+      active: `'${formData.active}'`,
     };
 
-    // Encrypt JSON data untuk Machine Group
-    const encryptedMessageMachineGroup = encryptMessage(
-      JSON.stringify(jsonDataMachineGroup, null, 2)
-    );
-
-    // Prepare payload untuk Machine Group
-    const payloadMachineGroup = {
-      apikey: "06EAAA9D10BE3D4386D10144E267B681",
-      uniqueid: "JFKlnUZyyu0MzRqj",
-      timestamp: new Date()
-        .toISOString()
-        .replace(/[-:.TZ]/g, "")
-        .slice(0, 14),
-      localdb: "N",
-      message: encryptedMessageMachineGroup,
+    const condition = {
+      id: { operator: "eq", value: formData.id },
     };
 
     try {
-      // Send POST request untuk Machine Group
-      await axios.post("/api", payloadMachineGroup);
-
-      // Format JSON data untuk Machine ID
-      const jsonDataMachineID = {
-        datacore: "MACHINE",
-        folder: "MACHINEID",
-        command: "UPDATE",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objectgroup: `'${formData.objectgroup}'`,
-        },
-        condition: {
-          objectgroup: {
-            operator: "eq",
-            value: machineGroup.objectgroup, // Menyesuaikan dengan objectgroup yang dipilih
-          },
-        },
-      };
-
-      // Encrypt JSON data untuk Machine ID
-      const encryptedMessageMachineID = encryptMessage(
-        JSON.stringify(jsonDataMachineID, null, 2)
+      await sendEncryptedRequest("MACHINEGROUP", record, condition);
+      await sendEncryptedRequest(
+        "MACHINEID",
+        { objectgroup: `'${formData.objectgroup}'` },
+        { objectgroup: { operator: "eq", value: machineGroup.objectgroup } }
       );
-
-      // Prepare payload untuk Machine ID
-      const payloadMachineID = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date()
-          .toISOString()
-          .replace(/[-:.TZ]/g, "")
-          .slice(0, 14),
-        localdb: "N",
-        message: encryptedMessageMachineID,
-      };
-
-      // Send POST request untuk Machine ID
-      await axios.post("/api", payloadMachineID);
-
-      // Format JSON data untuk Machine Detail
-      const jsonDataMachineDetail = {
-        datacore: "MACHINE",
-        folder: "MACHINEDETAIL",
-        command: "UPDATE",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objectgroup: `'${formData.objectgroup}'`,
-        },
-        condition: {
-          objectgroup: {
-            operator: "eq",
-            value: machineGroup.objectgroup, // Menyesuaikan dengan objectgroup yang dipilih
-          },
-        },
-      };
-
-      // Encrypt JSON data untuk Machine Detail
-      const encryptedMessageMachineDetail = encryptMessage(
-        JSON.stringify(jsonDataMachineDetail, null, 2)
+      await sendEncryptedRequest(
+        "MACHINEDETAIL",
+        { objectgroup: `'${formData.objectgroup}'` },
+        { objectgroup: { operator: "eq", value: machineGroup.objectgroup } }
       );
-
-      // Prepare payload untuk Machine Detail
-      const payloadMachineDetail = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date()
-          .toISOString()
-          .replace(/[-:.TZ]/g, "")
-          .slice(0, 14),
-        localdb: "N",
-        message: encryptedMessageMachineDetail,
-      };
-
-      // Send POST request untuk Machine Detail
-      await axios.post("/api", payloadMachineDetail);
-
-      // Format JSON data untuk Machine Profile
-      const jsonDataMachineProfile = {
-        datacore: "MACHINE",
-        folder: "MACHINEPROFILE",
-        command: "UPDATE",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objectgroup: `'${formData.objectgroup}'`,
-        },
-        condition: {
-          objectgroup: {
-            operator: "eq",
-            value: machineGroup.objectgroup, // Menyesuaikan dengan objectgroup yang dipilih
-          },
-        },
-      };
-
-      // Encrypt JSON data untuk Machine Profile
-      const encryptedMessageMachineProfile = encryptMessage(
-        JSON.stringify(jsonDataMachineProfile, null, 2)
+      await sendEncryptedRequest(
+        "MACHINEPROFILE",
+        { objectgroup: `'${formData.objectgroup}'` },
+        { objectgroup: { operator: "eq", value: machineGroup.objectgroup } }
       );
-
-      // Prepare payload untuk Machine Profile
-      const payloadMachineProfile = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date()
-          .toISOString()
-          .replace(/[-:.TZ]/g, "")
-          .slice(0, 14),
-        localdb: "N",
-        message: encryptedMessageMachineProfile,
-      };
-
-      // Send POST request untuk Machine Profile
-      await axios.post("/api", payloadMachineProfile);
+      await sendEncryptedRequest(
+        "MACHINEPRODUCTIVITY",
+        { objectgroup: `'${formData.objectgroup}'` },
+        { objectgroup: { operator: "eq", value: machineGroup.objectgroup } }
+      );
+      await sendEncryptedRequest(
+        "MACHINERECORDS",
+        { objectgroup: `'${formData.objectgroup}'` },
+        { objectgroup: { operator: "eq", value: machineGroup.objectgroup } }
+      );
 
       alert("Machine group and associated records updated successfully!");
-      onUpdate(); // Update list machine group
-      onClose(); // Close modal setelah update
+      onUpdate();
+      onClose();
     } catch (error) {
       console.error("Error updating machine group or related tables:", error);
     }
