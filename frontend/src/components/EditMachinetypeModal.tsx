@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils";
 import Tour from "reactour"; // Import React Tour
-import { Notebook } from "@phosphor-icons/react";
+import { Notebook, Spinner } from "@phosphor-icons/react";
+import { sendEncryptedRequest } from "../utils/apiUtils";
 
 interface Machinetype {
   id: number;
@@ -29,6 +28,8 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
   });
 
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const [isLoading, setIsLoading] = useState(false);
+
   const steps = [
     {
       selector: ".objecttype-input",
@@ -61,190 +62,71 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    // Format JSON data untuk Machine Type
-    const jsonDataMachinetype = {
-      datacore: "MACHINE",
-      folder: "MACHINETYPE",
-      command: "UPDATE",
-      group: "XCYTUA",
-      property: "PJLBBS",
-      record: {
-        objecttype: `'${formData.objecttype}'`,
-        description: `'${formData.description}'`,
-        active: `'${formData.active}'`,
-      },
-      condition: {
-        id: {
-          operator: "eq",
-          value: machinetype.id,
-        },
-      },
+    const record = {
+      objecttype: `'${formData.objecttype}'`,
+      description: `'${formData.description}'`,
+      active: `'${formData.active}'`,
     };
 
-    // Encrypt JSON data untuk Machine Type
-    const encryptedMessageMachinetype = encryptMessage(
-      JSON.stringify(jsonDataMachinetype, null, 2)
-    );
-
-    // Prepare payload untuk Machine Type
-    const payloadMachinetype = {
-      apikey: "06EAAA9D10BE3D4386D10144E267B681",
-      uniqueid: "JFKlnUZyyu0MzRqj",
-      timestamp: new Date().toISOString(),
-      localdb: "N",
-      message: encryptedMessageMachinetype,
+    const condition = {
+      id: { operator: "eq", value: machinetype.id },
     };
 
     try {
-      // Send PUT request untuk Machine Type
-      await axios.post(`/api`, payloadMachinetype);
+      // Update Machine Type
+      await sendEncryptedRequest("MACHINETYPE", record, condition);
 
-      // Format JSON data untuk Machine Group
-      const jsonDataMachineGroup = {
-        datacore: "MACHINE",
-        folder: "MACHINEGROUP",
-        command: "UPDATE",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objecttype: `'${formData.objecttype}'`,
-        },
-        condition: {
-          objecttype: {
-            operator: "eq",
-            value: machinetype.objecttype,
-          },
-        },
-      };
-
-      // Encrypt JSON data untuk Machine Group
-      const encryptedMessageMachineGroup = encryptMessage(
-        JSON.stringify(jsonDataMachineGroup, null, 2)
+      // Update Machine Group
+      await sendEncryptedRequest(
+        "MACHINEGROUP",
+        { objecttype: `'${formData.objecttype}'` },
+        { objecttype: { operator: "eq", value: machinetype.objecttype } }
       );
 
-      // Prepare payload untuk Machine Group
-      const payloadMachineGroup = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date().toISOString(),
-        localdb: "N",
-        message: encryptedMessageMachineGroup,
-      };
-
-      // Send PUT request untuk Machine Group
-      await axios.post(`/api`, payloadMachineGroup);
-
-      // Format JSON data untuk Machine ID
-      const jsonDataMachineID = {
-        datacore: "MACHINE",
-        folder: "MACHINEID",
-        command: "UPDATE",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objecttype: `'${formData.objecttype}'`,
-        },
-        condition: {
-          objecttype: {
-            operator: "eq",
-            value: machinetype.objecttype,
-          },
-        },
-      };
-
-      // Encrypt JSON data untuk Machine ID
-      const encryptedMessageMachineID = encryptMessage(
-        JSON.stringify(jsonDataMachineID, null, 2)
+      // Update Machine ID
+      await sendEncryptedRequest(
+        "MACHINEID",
+        { objecttype: `'${formData.objecttype}'` },
+        { objecttype: { operator: "eq", value: machinetype.objecttype } }
       );
 
-      // Prepare payload untuk Machine ID
-      const payloadMachineID = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date().toISOString(),
-        localdb: "N",
-        message: encryptedMessageMachineID,
-      };
-
-      // Send PUT request untuk Machine ID
-      await axios.post(`/api`, payloadMachineID);
-
-      // Format JSON data untuk Machine Detail
-      const jsonDataMachineDetail = {
-        datacore: "MACHINE",
-        folder: "MACHINEDETAIL",
-        command: "UPDATE",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objecttype: `'${formData.objecttype}'`,
-        },
-        condition: {
-          objecttype: {
-            operator: "eq",
-            value: machinetype.objecttype,
-          },
-        },
-      };
-
-      // Encrypt JSON data untuk Machine Detail
-      const encryptedMessageMachineDetail = encryptMessage(
-        JSON.stringify(jsonDataMachineDetail, null, 2)
+      // Update Machine Detail
+      await sendEncryptedRequest(
+        "MACHINEDETAIL",
+        { objecttype: `'${formData.objecttype}'` },
+        { objecttype: { operator: "eq", value: machinetype.objecttype } }
       );
 
-      // Prepare payload untuk Machine Detail
-      const payloadMachineDetail = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date().toISOString(),
-        localdb: "N",
-        message: encryptedMessageMachineDetail,
-      };
-
-      // Send PUT request untuk Machine Detail
-      await axios.post(`/api`, payloadMachineDetail);
-
-      // Format JSON data untuk Machine Profile
-      const jsonDataMachineProfile = {
-        datacore: "MACHINE",
-        folder: "MACHINEPROFILE",
-        command: "UPDATE",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objecttype: `'${formData.objecttype}'`,
-        },
-        condition: {
-          objecttype: {
-            operator: "eq",
-            value: machinetype.objecttype,
-          },
-        },
-      };
-
-      // Encrypt JSON data untuk Machine Profile
-      const encryptedMessageMachineProfile = encryptMessage(
-        JSON.stringify(jsonDataMachineProfile, null, 2)
+      // Update Machine Profile
+      await sendEncryptedRequest(
+        "MACHINEPROFILE",
+        { objecttype: `'${formData.objecttype}'` },
+        { objecttype: { operator: "eq", value: machinetype.objecttype } }
       );
 
-      // Prepare payload untuk Machine Profile
-      const payloadMachineProfile = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date().toISOString(),
-        localdb: "N",
-        message: encryptedMessageMachineProfile,
-      };
+      // Update Machine Productivity
+      await sendEncryptedRequest(
+        "MACHINEPRODUCTIVITY",
+        { objecttype: `'${formData.objecttype}'` },
+        { objecttype: { operator: "eq", value: machinetype.objecttype } }
+      );
 
-      // Send PUT request untuk Machine Profile
-      await axios.post(`/api`, payloadMachineProfile);
+      // Update Machine Records
+      await sendEncryptedRequest(
+        "MACHINERECORDS",
+        { objecttype: `'${formData.objecttype}'` },
+        { objecttype: { operator: "eq", value: machinetype.objecttype } }
+      );
 
-      alert("Machine type and associated machine groups updated successfully!");
-      onUpdate(); // Fetch and update the machine types list
-      onClose(); // Close the modal after update
+      
+      onUpdate();
+      onClose();
     } catch (error) {
-      console.error("Error updating machinetype or related tables:", error);
+      console.error("Error updating machine type or related tables:", error);
+    } finally {
+      setIsLoading(false); // Reset loading state
     }
   };
 
@@ -332,9 +214,10 @@ const EditMachinetypeModal: React.FC<EditMachinetypeModalProps> = ({
             </button>
             <button
               type="submit"
-              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button flex items-center bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
-              Update
+              {isLoading && <Spinner size={24} className="mr-2 animate-spin" />} 
+              {isLoading ? "Loading..." : "Update"}
             </button>
           </div>
         </form>

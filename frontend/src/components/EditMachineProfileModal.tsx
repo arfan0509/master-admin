@@ -10,6 +10,7 @@ import {
 import { countries } from "../utils/countries";
 import Tour from "reactour"; // Import React Tour
 import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { sendEncryptedRequest } from "../utils/apiUtils";
 
 interface MachineProfile {
   id: number;
@@ -303,66 +304,50 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const jsonData = {
-      datacore: "MACHINE",
-      folder: "MACHINEPROFILE",
-      command: "UPDATE",
-      group: "XCYTUA",
-      property: "PJLBBS",
-      record: {
-        objecttype: `'${formData.objecttype}'`,
-        objectgroup: `'${formData.objectgroup}'`,
-        objectid: `'${formData.objectid}'`,
-        objectcode: `'${formData.objectcode.trim()}'`, // Terapkan trim di sini
-        objectstatus: `'${formData.objectstatus}'`,
-        objectname: `'${formData.objectname}'`,
-        description: `'${formData.description}'`,
-        registereddate: `'${formatDate(
-          formData.registereddate,
-          "registereddate"
-        )}'`, // Tambahkan tanda petik
-        registeredno: `'${formData.registeredno}'`,
-        registeredby: `'${formData.registeredby}'`,
-        countryoforigin: `'${formData.countryoforigin}'`,
-        dob: `'${formatDate(formData.dob, "dob")}'`, // Tambahkan tanda petik
-        sex: `'${formData.sex}'`,
-        documentno: `'${formData.documentno}'`,
-        vendor: `'${formData.vendor}'`,
-        notes: `'${formData.notes}'`,
-        photogalery_1: `'${formData.photogalery_1}'`,
-        photogalery_2: `'${formData.photogalery_2}'`,
-        photogalery_3: `'${formData.photogalery_3}'`,
-        photogalery_4: `'${formData.photogalery_4}'`,
-        photogalery_5: `'${formData.photogalery_5}'`,
-        video: `'${formData.video}'`,
-        active: formData.active,
-      },
-      condition: {
-        id: {
-          operator: "eq",
-          value: formData.id,
-        },
-      },
+    // Membuat record untuk MACHINEPROFILE
+    const record = {
+      objecttype: `'${formData.objecttype}'`,
+      objectgroup: `'${formData.objectgroup}'`,
+      objectid: `'${formData.objectid}'`,
+      objectcode: `'${formData.objectcode}'`, // Terapkan trim di sini
+      objectstatus: `'${formData.objectstatus}'`,
+      objectname: `'${formData.objectname}'`,
+      description: `'${formData.description}'`,
+      registereddate: `'${formatDate(
+        formData.registereddate,
+        "registereddate"
+      )}'`,
+      registeredno: `'${formData.registeredno}'`,
+      registeredby: `'${formData.registeredby}'`,
+      countryoforigin: `'${formData.countryoforigin}'`,
+      dob: `'${formatDate(formData.dob, "dob")}'`,
+      sex: `'${formData.sex}'`,
+      documentno: `'${formData.documentno}'`,
+      vendor: `'${formData.vendor}'`,
+      notes: `'${formData.notes}'`,
+      photogalery_1: `'${formData.photogalery_1}'`,
+      photogalery_2: `'${formData.photogalery_2}'`,
+      photogalery_3: `'${formData.photogalery_3}'`,
+      photogalery_4: `'${formData.photogalery_4}'`,
+      photogalery_5: `'${formData.photogalery_5}'`,
+      video: `'${formData.video}'`,
+      active: formData.active,
     };
 
-    const jsonString = JSON.stringify(jsonData, null, 2);
-    const encryptedMessage = encryptMessage(jsonString);
-
-    const payload = {
-      apikey: "06EAAA9D10BE3D4386D10144E267B681",
-      uniqueid: "JFKlnUZyyu0MzRqj",
-      timestamp: new Date().toISOString(),
-      localdb: "N",
-      message: encryptedMessage,
+    // Membuat kondisi untuk pembaruan
+    const condition = {
+      id: { operator: "eq", value: formData.id },
     };
 
     try {
-      await axios.post("/api", payload);
-      alert("Machine profile updated successfully!");
+      // Mengupdate MACHINEPROFILE
+      await sendEncryptedRequest("MACHINEPROFILE", record, condition);
+
+      alert("Machine profile and associated records updated successfully!");
       onUpdate();
       onClose();
     } catch (error) {
-      console.error("Error updating machine profile:", error);
+      console.error("Error updating machine profile or related tables:", error);
     }
   };
 

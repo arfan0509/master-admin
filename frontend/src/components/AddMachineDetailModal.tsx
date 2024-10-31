@@ -207,6 +207,15 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
       alert("Machine detail created successfully!");
       onAdd();
       onClose();
+      if (response.status == 200) {
+        await axios.post("http://192.168.5.102:3000/notify", {
+          event: "data_inserted",
+        }, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      }
     } catch (error) {
       console.error("Error creating machine detail:", error);
     }

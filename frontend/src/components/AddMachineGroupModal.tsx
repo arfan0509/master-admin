@@ -79,7 +79,7 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
-
+  
     const message = JSON.stringify(
       {
         datacore: "MACHINE",
@@ -97,7 +97,7 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
       null,
       2
     );
-
+  
     const encryptedMessage = encryptMessage(message);
     const payload = {
       apikey: "06EAAA9D10BE3D4386D10144E267B681",
@@ -106,21 +106,32 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
       localdb: "N",
       message: encryptedMessage,
     };
-
+  
     try {
       const response = await axios.post("/api", payload, {
         headers: {
           "Content-Type": "application/json",
         },
       });
-
+  
       alert("Machine group created successfully!");
       onAdd();
       onClose();
+  
+      if (response.status == 200) {
+        await axios.post("http://192.168.5.102:3000/notify", {
+          event: "data_inserted",
+        }, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      }
     } catch (error) {
       console.error("Error adding machine group:", error);
     }
   };
+  
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">

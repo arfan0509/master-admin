@@ -7,6 +7,7 @@ import { MapPin } from "@phosphor-icons/react";
 import { countries } from "../utils/countries"; // Import data negara
 import Tour from "reactour"; // Import React Tour
 import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { sendEncryptedRequest } from "../utils/apiUtils";
 
 interface MachineId {
   id: number;
@@ -187,117 +188,65 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Format JSON data for Machine ID
-    const jsonDataMachineID = {
-      datacore: "MACHINE",
-      folder: "MACHINEID",
-      command: "UPDATE",
-      group: "XCYTUA",
-      property: "PJLBBS",
-      record: {
-        objecttype: formData.objecttype,
-        objectgroup: formData.objectgroup,
-        objectid: formData.objectid,
-        objectname: `'${formData.objectname}'`,
-        icongroup: formData.icongroup,
-        iconid: formData.iconid,
-        countryid: formData.countryid,
-        stateid: formData.stateid,
-        cityid: formData.cityid,
-        regionid: formData.regionid,
-        lat: formData.lat,
-        long: formData.long,
-        active: formData.active,
-      },
-      condition: {
-        id: {
-          operator: "eq",
-          value: formData.id,
-        },
-      },
+    const record = {
+      objecttype: formData.objecttype,
+      objectgroup: formData.objectgroup,
+      objectid: formData.objectid,
+      objectname: `'${formData.objectname}'`,
+      icongroup: formData.icongroup,
+      iconid: formData.iconid,
+      countryid: formData.countryid,
+      stateid: formData.stateid,
+      cityid: formData.cityid,
+      regionid: formData.regionid,
+      lat: formData.lat,
+      long: formData.long,
+      active: formData.active,
     };
 
-    const encryptedMessageMachineID = encryptMessage(
-      JSON.stringify(jsonDataMachineID)
-    );
-    const payloadMachineID = {
-      apikey: "06EAAA9D10BE3D4386D10144E267B681",
-      uniqueid: "JFKlnUZyyu0MzRqj",
-      timestamp: new Date().toISOString(),
-      localdb: "N",
-      message: encryptedMessageMachineID,
+    const condition = {
+      id: { operator: "eq", value: formData.id }, // Menyesuaikan dengan ID yang relevan
     };
 
     try {
-      await axios.post(`/api`, payloadMachineID);
+      // Update Machine ID
+      await sendEncryptedRequest("MACHINEID", record, condition);
 
-      // Prepare JSON data for Machine Detail
-      const jsonDataMachineDetail = {
-        datacore: "MACHINE",
-        folder: "MACHINEDETAIL",
-        command: "UPDATE",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objectid: `'${formData.objectid}'`, // Update Object ID in Machine Detail
-          lat: formData.lat,
-          long: formData.long,
+      // Update Machine Detail with lat and long
+      await sendEncryptedRequest(
+        "MACHINEDETAIL",
+        {
+          objectid: `'${formData.objectid}'`,
+          lat: formData.lat, // Menambahkan lat
+          long: formData.long, // Menambahkan long
         },
-        condition: {
-          objectid: {
-            operator: "eq",
-            value: machineId.objectid,
-          },
-        },
-      };
-
-      const encryptedMessageMachineDetail = encryptMessage(
-        JSON.stringify(jsonDataMachineDetail)
+        { objectid: { operator: "eq", value: machineId.objectid } }
       );
-      const payloadMachineDetail = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date().toISOString(),
-        localdb: "N",
-        message: encryptedMessageMachineDetail,
-      };
 
-      await axios.post(`/api`, payloadMachineDetail);
-
-      // Prepare JSON data for Machine Profile
-      const jsonDataMachineProfile = {
-        datacore: "MACHINE",
-        folder: "MACHINEPROFILE",
-        command: "UPDATE",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objectid: `'${formData.objectid}'`, // Update Object ID in Machine Profile
-        },
-        condition: {
-          objectid: {
-            operator: "eq",
-            value: machineId.objectid,
-          },
-        },
-      };
-
-      const encryptedMessageMachineProfile = encryptMessage(
-        JSON.stringify(jsonDataMachineProfile)
+      // Update Machine Profile
+      await sendEncryptedRequest(
+        "MACHINEPROFILE",
+        { objectid: `'${formData.objectid}'` },
+        { objectid: { operator: "eq", value: machineId.objectid } }
       );
-      const payloadMachineProfile = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date().toISOString(),
-        localdb: "N",
-        message: encryptedMessageMachineProfile,
-      };
 
-      await axios.post(`/api`, payloadMachineProfile);
+      // Update Machine Productivity
+      await sendEncryptedRequest(
+        "MACHINEPRODUCTIVITY",
+        { objectid: `'${formData.objectid}'` },
+        { objectid: { operator: "eq", value: machineId.objectid } }
+      );
+
+      // Update Machine Records
+      await sendEncryptedRequest(
+        "MACHINERECORDS",
+        { objectid: `'${formData.objectid}'` },
+        { objectid: { operator: "eq", value: machineId.objectid } }
+      );
 
       alert("Machine ID and associated records updated successfully!");
-      onUpdate(); // Update the list
-      onClose(); // Close modal after update
+      onUpdate();
+      onClose();
     } catch (error) {
       console.error("Error updating machine ID or related tables:", error);
     }

@@ -8,6 +8,7 @@ import {
 } from "../utils/dropdownUtils";
 import Tour from "reactour"; // Import React Tour
 import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { sendEncryptedRequest } from "../utils/apiUtils";
 
 interface MachineDetail {
   id: number;
@@ -179,100 +180,55 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Format JSON data untuk Machine Detail
-    const jsonDataMachineDetail = {
-      datacore: "MACHINE",
-      folder: "MACHINEDETAIL",
-      command: "UPDATE",
-      group: "XCYTUA",
-      property: "PJLBBS",
-      record: {
-        objecttype: formData.objecttype,
-        objectgroup: formData.objectgroup,
-        objectid: formData.objectid,
-        objectcode: formData.objectcode.replace(/\s+/g, ""),
-        objectname: `'${formData.objectname}'`,
-        lat: formData.lat,
-        long: formData.long,
-        active: formData.active,
-      },
-      condition: {
-        id: {
-          operator: "eq",
-          value: formData.id,
-        },
-      },
+    const record = {
+      objecttype: formData.objecttype,
+      objectgroup: formData.objectgroup,
+      objectid: formData.objectid,
+      objectcode: formData.objectcode, // Menghapus spasi dari objectcode
+      objectname: `'${formData.objectname}'`,
+      lat: formData.lat,
+      long: formData.long,
+      active: formData.active,
     };
 
-    const jsonStringMachineDetail = JSON.stringify(
-      jsonDataMachineDetail,
-      null,
-      2
-    );
-    const encryptedMessageMachineDetail = encryptMessage(
-      jsonStringMachineDetail
-    );
-
-    const payloadMachineDetail = {
-      apikey: "06EAAA9D10BE3D4386D10144E267B681",
-      uniqueid: "JFKlnUZyyu0MzRqj",
-      timestamp: new Date().toISOString(),
-      localdb: "N",
-      message: encryptedMessageMachineDetail,
+    const condition = {
+      id: { operator: "eq", value: formData.id }, // Menyesuaikan dengan ID yang relevan
     };
 
     try {
-      // Send POST request untuk Machine Detail
-      await axios.post(`/api`, payloadMachineDetail);
+      // Update Machine Detail
+      await sendEncryptedRequest("MACHINEDETAIL", record, condition);
 
-      // Format JSON data untuk Machine Profile
-      const jsonDataMachineProfile = {
-        datacore: "MACHINE",
-        folder: "MACHINEPROFILE",
-        command: "UPDATE",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objectcode: formData.objectcode,
-          objectname: `'${formData.objectname}'`,
+      // Update Machine Profile
+      await sendEncryptedRequest(
+        "MACHINEPROFILE",
+        {
+          objectcode: record.objectcode, // Menggunakan objectcode yang sudah diperbarui
+          objectname: `'${formData.objectname}'`, // Perbaiki pengetikan dari 'objeckname' ke 'objectname'
         },
-        condition: {
-          objectid: {
-            operator: "eq",
-            value: formData.objectid, // Menggunakan objectid yang sama
-          },
-        },
-      };
-
-      const jsonStringMachineProfile = JSON.stringify(
-        jsonDataMachineProfile,
-        null,
-        2
-      );
-      const encryptedMessageMachineProfile = encryptMessage(
-        jsonStringMachineProfile
+        { objectid: { operator: "eq", value: formData.objectid } } // Menggunakan objectid dari formData
       );
 
-      const payloadMachineProfile = {
-        apikey: "06EAAA9D10BE3D4386D10144E267B681",
-        uniqueid: "JFKlnUZyyu0MzRqj",
-        timestamp: new Date().toISOString(),
-        localdb: "N",
-        message: encryptedMessageMachineProfile,
-      };
+      // Update Machine Productivity
+      await sendEncryptedRequest(
+        "MACHINEPRODUCTIVITY",
+        { objectcode: record.objectcode }, // Hanya objectcode
+        { objectid: { operator: "eq", value: formData.objectid } } // Menggunakan objectid dari formData
+      );
 
-      // Send POST request untuk Machine Profile
-      await axios.post(`/api`, payloadMachineProfile);
+      // Update Machine Records
+      await sendEncryptedRequest(
+        "MACHINERECORDS",
+        { objectcode: record.objectcode }, // Hanya objectcode
+        { objectid: { operator: "eq", value: formData.objectid } } // Menggunakan objectid dari formData
+      );
 
-      alert("Machine Detail and associated records updated successfully!");
+      alert("Machine detail and associated records updated successfully!");
       onUpdate();
       onClose();
     } catch (error) {
-      console.error("Error updating machine detail or related table:", error);
+      console.error("Error updating machine detail or related tables:", error);
     }
-    console.log(
-      formData.objectcode.split("").map((char) => char.charCodeAt(0))
-    );
   };
 
   return (
