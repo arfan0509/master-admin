@@ -9,7 +9,7 @@ import {
 } from "../utils/dropdownUtils";
 import { countries } from "../utils/countries";
 import Tour from "reactour"; // Import React Tour
-import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
 
 interface AddMachineProfileModalProps {
   onClose: () => void;
@@ -134,6 +134,8 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
   };
 
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const [isLoading, setIsLoading] = useState(false);
+
   const steps = [
     {
       selector: ".objecttype-input",
@@ -274,9 +276,8 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    // Format data untuk dikirim
-    // Format the data to be sent
     const jsonData = {
       datacore: "MACHINE",
       folder: "MACHINEPROFILE",
@@ -310,16 +311,13 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
       },
     };
 
-    // Convert JSON data to pretty-printed string
     const jsonString = JSON.stringify(jsonData, null, 2);
 
-    // Encrypt JSON data
     const encryptedMessage = encryptMessage(jsonString);
 
-    // Prepare payload
     const payload = {
-      apikey: "06EAAA9D10BE3D4386D10144E267B681",
-      uniqueid: "JFKlnUZyyu0MzRqj",
+      apikey: import.meta.env.VITE_API_KEY,
+      uniqueid: import.meta.env.VITE_UNIQUE_ID,
       timestamp: new Date().toISOString(),
       localdb: "N",
       message: encryptedMessage,
@@ -335,22 +333,27 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
           "Content-Type": "application/json",
         },
       });
-  
-      alert("Machine group created successfully!");
+
       onAdd();
       onClose();
-  
+
       if (response.status == 200) {
-        await axios.post("http://192.168.5.102:3000/notify", {
-          event: "data_inserted",
-        }, {
-          headers: {
-            "Content-Type": "application/json",
+        await axios.post(
+          "https://intern-server-production.up.railway.app/notify",
+          {
+            event: "data_inserted",
           },
-        });
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
       }
     } catch (error) {
       console.error("Error adding machine group:", error);
+    } finally {
+      setIsLoading(false); // Reset loading state setelah proses selesai
     }
   };
 
@@ -744,9 +747,10 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
             </button>
             <button
               type="submit"
-              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button flex items-center bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
-              Submit
+              {isLoading && <Spinner size={24} className="mr-2 animate-spin" />}
+              {isLoading ? "Loading..." : "Submit"}
             </button>
           </div>
         </form>
