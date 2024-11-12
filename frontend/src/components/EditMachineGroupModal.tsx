@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils";
 import { fetchMachineTypes } from "../utils/dropdownUtils";
 import Tour from "reactour"; // Import React Tour
-import { Notebook } from "@phosphor-icons/react";
+import { Notebook, Spinner } from "@phosphor-icons/react";
 import { sendEncryptedRequest } from "../utils/apiUtils";
 
 interface MachineGroup {
@@ -54,6 +52,8 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
   }, []);
 
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const [isLoading, setIsLoading] = useState(false);
+
   const steps = [
     {
       selector: ".objecttype-input",
@@ -95,6 +95,7 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const record = {
       objecttype: `'${formData.objecttype}'`,
@@ -135,11 +136,12 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
         { objectgroup: { operator: "eq", value: machineGroup.objectgroup } }
       );
 
-      alert("Machine group and associated records updated successfully!");
       onUpdate();
       onClose();
     } catch (error) {
       console.error("Error updating machine group or related tables:", error);
+    } finally {
+      setIsLoading(false); // Reset loading state
     }
   };
 
@@ -240,9 +242,10 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
             </button>
             <button
               type="submit"
-              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button flex items-center bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
-              Update
+              {isLoading && <Spinner size={24} className="mr-2 animate-spin" />}
+              {isLoading ? "Loading..." : "Update"}
             </button>
           </div>
         </form>

@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import Tour from "reactour"; // Import React Tour
-import { encryptMessage } from "../utils/encryptionUtils";
-import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { sendInsertRequest } from "../utils/insertUtils";
 
 interface AddMachineTypeModalProps {
   onClose: () => void;
@@ -20,6 +19,8 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
   });
 
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const [isLoading, setIsLoading] = useState(false);
+
   const steps = [
     {
       selector: ".objecttype-input",
@@ -54,58 +55,27 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    const message = JSON.stringify(
-      {
-        datacore: "MACHINE",
-        folder: "MACHINETYPE",
-        command: "INSERT",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objecttype: formData.objecttype,
-          description: `'${formData.description}'`,
-          active: formData.active,
-        },
-      },
-      null,
-      2
-    );
-
-    const encryptedMessage = encryptMessage(message);
-
-    const payload = {
-      apikey: "06EAAA9D10BE3D4386D10144E267B681",
-      uniqueid: "JFKlnUZyyu0MzRqj",
-      timestamp: new Date().toISOString(),
-      localdb: "N",
-      message: encryptedMessage,
+    const record = {
+      objecttype: formData.objecttype,
+      description: `'${formData.description}'`,
+      active: formData.active,
     };
 
     try {
-      const response = await axios.post("/api", payload, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-  
-      alert("Machine group created successfully!");
+      // Insert data ke MACHINETYPE
+      await sendInsertRequest("MACHINETYPE", record);
+
       onAdd();
       onClose();
-  
-      if (response.status == 200) {
-        await axios.post("http://192.168.5.102:3000/notify", {
-          event: "data_inserted",
-        }, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-      }
     } catch (error) {
-      console.error("Error adding machine group:", error);
+      console.error("Error adding machine type:", error);
+    } finally {
+      setIsLoading(false); // Reset loading state setelah proses selesai
     }
   };
+
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
@@ -187,9 +157,10 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
             </button>
             <button
               type="submit"
-              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button flex items-center bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
-              Submit
+              {isLoading && <Spinner size={24} className="mr-2 animate-spin" />}
+              {isLoading ? "Loading..." : "Submit"}
             </button>
           </div>
         </form>

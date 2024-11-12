@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils";
 import {
   fetchMachineTypes,
   fetchMachineGroups,
@@ -9,7 +7,8 @@ import {
 } from "../utils/dropdownUtils";
 import { countries } from "../utils/countries";
 import Tour from "reactour"; // Import React Tour
-import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { sendInsertRequest } from "../utils/insertUtils";
 
 interface AddMachineProfileModalProps {
   onClose: () => void;
@@ -134,6 +133,8 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
   };
 
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const [isLoading, setIsLoading] = useState(false);
+
   const steps = [
     {
       selector: ".objecttype-input",
@@ -274,83 +275,46 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    // Format data untuk dikirim
-    // Format the data to be sent
-    const jsonData = {
-      datacore: "MACHINE",
-      folder: "MACHINEPROFILE",
-      command: "INSERT",
-      group: "XCYTUA",
-      property: "PJLBBS",
-      record: {
-        objecttype: formData.objecttype,
-        objectgroup: formData.objectgroup,
-        objectid: formData.objectid,
-        objectcode: formData.objectcode,
-        objectstatus: formData.objectstatus,
-        objectname: `'${formData.objectname}'`,
-        description: `'${formData.description}'`,
-        registereddate: formatDate(formData.registereddate, "registereddate"),
-        registeredno: `'${formData.registeredno}'`,
-        registeredby: `'${formData.registeredby}'`,
-        countryoforigin: `'${formData.countryoforigin}'`,
-        dob: formatDate(formData.dob, "dob"),
-        sex: `'${formData.sex}'`,
-        documentno: `'${formData.documentno}'`,
-        vendor: `'${formData.vendor}'`,
-        notes: `'${formData.notes}'`,
-        photogalery_1: `'${formData.photogalery_1}'`,
-        photogalery_2: `'${formData.photogalery_2}'`,
-        photogalery_3: `'${formData.photogalery_3}'`,
-        photogalery_4: `'${formData.photogalery_4}'`,
-        photogalery_5: `'${formData.photogalery_5}'`,
-        video: `'${formData.video}'`,
-        active: formData.active,
-      },
+    // Data yang akan di-insert ke dalam MACHINEPROFILE
+    const record = {
+      objecttype: formData.objecttype,
+      objectgroup: formData.objectgroup,
+      objectid: formData.objectid,
+      objectcode: formData.objectcode,
+      objectstatus: formData.objectstatus,
+      objectname: `'${formData.objectname}'`,
+      description: `'${formData.description}'`,
+      registereddate: formatDate(formData.registereddate, "registereddate"),
+      registeredno: `'${formData.registeredno}'`,
+      registeredby: `'${formData.registeredby}'`,
+      countryoforigin: `'${formData.countryoforigin}'`,
+      dob: formatDate(formData.dob, "dob"),
+      sex: `'${formData.sex}'`,
+      documentno: `'${formData.documentno}'`,
+      vendor: `'${formData.vendor}'`,
+      notes: `'${formData.notes}'`,
+      photogalery_1: `'${formData.photogalery_1}'`,
+      photogalery_2: `'${formData.photogalery_2}'`,
+      photogalery_3: `'${formData.photogalery_3}'`,
+      photogalery_4: `'${formData.photogalery_4}'`,
+      photogalery_5: `'${formData.photogalery_5}'`,
+      video: `'${formData.video}'`,
+      active: formData.active,
     };
-
-    // Convert JSON data to pretty-printed string
-    const jsonString = JSON.stringify(jsonData, null, 2);
-
-    // Encrypt JSON data
-    const encryptedMessage = encryptMessage(jsonString);
-
-    // Prepare payload
-    const payload = {
-      apikey: "06EAAA9D10BE3D4386D10144E267B681",
-      uniqueid: "JFKlnUZyyu0MzRqj",
-      timestamp: new Date().toISOString(),
-      localdb: "N",
-      message: encryptedMessage,
-    };
-
-    // Log JSON and encrypted payload
-    // console.log("Original JSON Data:", jsonString);
-    // console.log("Encrypted Payload:", JSON.stringify(payload, null, 2));
 
     try {
-      const response = await axios.post("/api", payload, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-  
-      alert("Machine group created successfully!");
+      // Panggil fungsi insert
+      await sendInsertRequest("MACHINEPROFILE", record);
+
+      // Jika berhasil, jalankan onAdd dan onClose
       onAdd();
       onClose();
-  
-      if (response.status == 200) {
-        await axios.post("http://192.168.5.102:3000/notify", {
-          event: "data_inserted",
-        }, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-      }
     } catch (error) {
-      console.error("Error adding machine group:", error);
+      console.error("Error creating machine profile:", error);
+    } finally {
+      setIsLoading(false); // Reset loading state setelah proses selesai
     }
   };
 
@@ -744,9 +708,10 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
             </button>
             <button
               type="submit"
-              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button flex items-center bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
-              Submit
+              {isLoading && <Spinner size={24} className="mr-2 animate-spin" />}
+              {isLoading ? "Loading..." : "Submit"}
             </button>
           </div>
         </form>

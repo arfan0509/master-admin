@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils";
 import {
   fetchMachineTypes,
   fetchMachineGroups,
@@ -9,7 +7,7 @@ import {
 } from "../utils/dropdownUtils";
 import { countries } from "../utils/countries";
 import Tour from "reactour"; // Import React Tour
-import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
 import { sendEncryptedRequest } from "../utils/apiUtils";
 
 interface MachineProfile {
@@ -165,6 +163,8 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
   }, [formData.objectcode, objectCodes]);
 
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const [isLoading, setIsLoading] = useState(false);
+
   const steps = [
     {
       selector: ".objecttype-input",
@@ -303,6 +303,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     // Membuat record untuk MACHINEPROFILE
     const record = {
@@ -343,11 +344,12 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
       // Mengupdate MACHINEPROFILE
       await sendEncryptedRequest("MACHINEPROFILE", record, condition);
 
-      alert("Machine profile and associated records updated successfully!");
       onUpdate();
       onClose();
     } catch (error) {
       console.error("Error updating machine profile or related tables:", error);
+    } finally {
+      setIsLoading(false); // Reset loading state
     }
   };
 
@@ -741,9 +743,10 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
             </button>
             <button
               type="submit"
-              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button flex items-center bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
-              Update
+              {isLoading && <Spinner size={24} className="mr-2 animate-spin" />}
+              {isLoading ? "Loading..." : "Update"}
             </button>
           </div>
         </form>

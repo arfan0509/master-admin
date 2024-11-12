@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils";
 import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
 import MapLocationModal from "./MapLocationModal"; // Import MapLocationModal
-import { MapPin } from "@phosphor-icons/react";
+import { MapPin, Spinner } from "@phosphor-icons/react";
 import { countries } from "../utils/countries"; // Import data negara
 import Tour from "reactour"; // Import React Tour
 import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
@@ -97,6 +95,8 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
   }, [formData.objecttype, machinegroups]);
 
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const [isLoading, setIsLoading] = useState(false);
+
   const steps = [
     {
       selector: ".objecttype-input",
@@ -187,6 +187,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const record = {
       objecttype: formData.objecttype,
@@ -244,11 +245,12 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
         { objectid: { operator: "eq", value: machineId.objectid } }
       );
 
-      alert("Machine ID and associated records updated successfully!");
       onUpdate();
       onClose();
     } catch (error) {
       console.error("Error updating machine ID or related tables:", error);
+    } finally {
+      setIsLoading(false); // Reset loading state
     }
   };
 
@@ -483,9 +485,10 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
             </button>
             <button
               type="submit"
-              className="submit-button bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
+              className="submit-button flex items-center bg-[#385878] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
-              Update
+              {isLoading && <Spinner size={24} className="mr-2 animate-spin" />}
+              {isLoading ? "Loading..." : "Update"}
             </button>
           </div>
         </form>

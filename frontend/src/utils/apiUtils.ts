@@ -30,8 +30,8 @@ export const sendEncryptedRequest = async (
   const encryptedMessage = encryptMessage(JSON.stringify(jsonData, null, 2));
 
   const payload = {
-    apikey: "06EAAA9D10BE3D4386D10144E267B681",
-    uniqueid: "JFKlnUZyyu0MzRqj",
+    apikey: import.meta.env.VITE_API_KEY,
+      uniqueid: import.meta.env.VITE_UNIQUE_ID,
     timestamp: new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14),
     localdb: "N",
     message: encryptedMessage,
@@ -43,7 +43,7 @@ export const sendEncryptedRequest = async (
     // Cek apakah status respons adalah 200
     if (response.status === 200) {
       // Kirim notifikasi ke server lain
-      await axios.post("https://intern-server-production.up.railway.app/notify", {
+      await axios.post("http://3.0.78.128/notify", {
         event: "data_inserted",
       }, {
         headers: {
