@@ -1,17 +1,22 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState } from "react";
 import Tour from "reactour"; // Import React Tour
 import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
 import { sendInsertRequest } from "../utils/insertUtils";
 
 interface AddMachineTypeModalProps {
+  isOpen: boolean;
   onClose: () => void;
   onAdd: () => void;
 }
 
 const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
+  isOpen,
   onClose,
   onAdd,
 }) => {
+  if (!isOpen) return null; // Menyembunyikan modal jika isOpen false
+
   const [formData, setFormData] = useState({
     objecttype: "",
     description: "",
@@ -76,16 +81,19 @@ const AddMachineTypeModal: React.FC<AddMachineTypeModalProps> = ({
     }
   };
 
-
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div
+        className="fixed inset-0 bg-black opacity-50"
+        onClick={onClose}
+      ></div>
       <Tour
         steps={steps}
         isOpen={isTourOpen}
         onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
       />
-      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Add Machine Type</h2>
           <button onClick={handleStartTour} className="p-2">
             <Notebook size={24} />

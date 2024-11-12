@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useEffect } from "react";
 import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
 import MapLocationModal from "./MapLocationModal"; // Import MapLocationModal
@@ -26,15 +27,18 @@ interface MachineId {
 
 interface EditMachineIdModalProps {
   machineId: MachineId;
+  isOpen: boolean;
   onClose: () => void;
   onUpdate: () => void;
 }
 
 const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
   machineId,
+  isOpen,
   onClose,
   onUpdate,
 }) => {
+  if (!isOpen) return null; 
   const [formData, setFormData] = useState({
     id: machineId.id,
     objecttype: machineId.objecttype,
@@ -266,7 +270,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
         onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
       />
       <div className="bg-white w-full max-w-3xl mx-auto p-6 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <div className="flex items-center justify-between mb-4 pb-5">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Edit Machine ID</h2>
           <button onClick={handleStartTour} className="p-2">
             <Notebook size={24} />

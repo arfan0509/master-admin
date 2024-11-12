@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import {
   MapContainer,
@@ -52,9 +53,7 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
           format: "json",
         },
       })
-      .then((response) => {
-        const { address } = response.data;
-      })
+
       .catch((error) => {
         console.error("Error during reverse geocoding:", error);
       });
@@ -172,7 +171,7 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <LocationMarker />
           <MapContainerEvents
-            onClick={(e) => handleMapClick(e.latlng.lat, e.latlng.lng)}
+            onClick={(e: { latlng: { lat: number; lng: number; }; }) => handleMapClick(e.latlng.lat, e.latlng.lng)}
           />
         </MapContainer>
 
@@ -206,7 +205,7 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
 // Create a component to handle map events
 const MapContainerEvents = ({ onClick }) => {
   useMapEvents({
-    click(e) {
+    click(e: any) {
       onClick(e);
     },
   });

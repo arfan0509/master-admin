@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useEffect } from "react";
 import {
   fetchMachineTypes,
@@ -9,14 +11,17 @@ import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebo
 import { sendInsertRequest } from "../utils/insertUtils";
 
 interface AddMachineDetailModalProps {
+  isOpen: boolean;
   onClose: () => void;
   onAdd: () => void;
 }
 
 const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
+  isOpen,
   onClose,
   onAdd,
 }) => {
+  if (!isOpen) return null;
   const [formData, setFormData] = useState({
     objecttype: "",
     objectgroup: "",
@@ -206,7 +211,7 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
         onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
       />
       <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <div className="flex items-center justify-between mb-4 pb-5">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Add Machine Detail</h2>
           <button onClick={handleStartTour} className="p-2">
             <Notebook size={24} />

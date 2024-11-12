@@ -313,8 +313,9 @@ const MachineGroupData: React.FC = () => {
       {/* Add Machine Group Modal */}
       {addModalOpen && (
         <AddMachineGroupModal
-          onClose={() => setAddModalOpen(false)}
-          onAdd={handleAdd}
+          isOpen={addModalOpen} // Pastikan addModalOpen adalah boolean yang mengontrol apakah modal terbuka
+          onClose={() => setAddModalOpen(false)} // Fungsi untuk menutup modal
+          onAdd={handleAdd} // Fungsi untuk menambahkan grup mesin
         />
       )}
 

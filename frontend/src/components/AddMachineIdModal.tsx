@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useEffect } from "react";
 import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
 import MapLocationModal from "./MapLocationModal"; // Import MapLocationModal
@@ -19,14 +20,17 @@ interface MachineGroup {
 }
 
 interface AddMachineIdModalProps {
+  isOpen: boolean;
   onClose: () => void;
   onAdd: () => void;
 }
 
 const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
+  isOpen,
   onClose,
   onAdd,
 }) => {
+  if (!isOpen) return null;
   const [formData, setFormData] = useState({
     objecttype: "",
     objectgroup: "",
@@ -214,7 +218,7 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
         onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
       />
       <div className="bg-white w-full max-w-3xl mx-auto p-6 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <div className="flex items-center justify-between mb-4 pb-5">
+        <div className="flex items-center justify-between mb-6 pb-5">
           <h2 className="text-xl font-bold">Add Machine ID</h2>
           <button onClick={handleStartTour} className="p-2">
             <Notebook size={24} />

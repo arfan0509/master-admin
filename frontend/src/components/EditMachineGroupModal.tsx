@@ -35,9 +35,6 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
     { id: number; objecttype: string }[]
   >([]);
 
-  const [originalJson, setOriginalJson] = useState<string | null>(null);
-  const [encryptedMessage, setEncryptedMessage] = useState<string | null>(null);
-
   useEffect(() => {
     const fetchObjectTypes = async () => {
       try {
@@ -146,15 +143,19 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div
+        className="fixed inset-0 bg-black opacity-50"
+        onClick={onClose}
+      ></div>
       <Tour
         steps={steps}
         isOpen={isTourOpen}
         onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
       />
-      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold mb-4">Edit Machine Group</h2>
+      <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">Edit Machine Group</h2>
           <button onClick={handleStartTour} className="p-2">
             <Notebook size={24} />
           </button>

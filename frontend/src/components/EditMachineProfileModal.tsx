@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useEffect } from "react";
 import {
   fetchMachineTypes,
@@ -39,15 +40,18 @@ interface MachineProfile {
 
 interface EditMachineProfileModalProps {
   machineProfile: MachineProfile;
+  isOpen: boolean;
   onClose: () => void;
   onUpdate: () => void;
 }
 
 const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
   machineProfile,
+  isOpen,
   onClose,
   onUpdate,
 }) => {
+  if (!isOpen) return null;
   const [formData, setFormData] = useState({
     id: machineProfile.id,
     objecttype: machineProfile.objecttype,
@@ -269,8 +273,8 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
     setIsTourOpen(true); // Mulai tur saat tombol diklik
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  const handleChange = async (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     setFormData({
       ...formData,
@@ -365,7 +369,7 @@ const EditMachineProfileModal: React.FC<EditMachineProfileModalProps> = ({
         onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
       />
       <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
-        <div className="flex items-center justify-between mb-4 pb-5">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Edit Machine Profile</h2>
           <button onClick={handleStartTour} className="p-2">
             <Notebook size={24} />

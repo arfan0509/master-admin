@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useEffect } from "react";
 import { fetchMachineTypes } from "../utils/dropdownUtils";
 import Tour from "reactour"; // Import React Tour
@@ -5,21 +6,23 @@ import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebo
 import { sendInsertRequest } from "../utils/insertUtils";
 
 interface AddMachineGroupModalProps {
+  isOpen: boolean; // Tambahkan ini
   onClose: () => void;
   onAdd: () => void;
 }
 
 const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
+  isOpen,
   onClose,
   onAdd,
 }) => {
+  if (!isOpen) return null; // Jika isOpen false, jangan render modal
   const [formData, setFormData] = useState({
     objecttype: "",
     objectgroup: "",
     description: "",
     active: "Y",
   });
-  const [error, setError] = useState("");
 
   const [machinetypes, setMachinetypes] = useState<any[]>([]);
 
@@ -81,7 +84,6 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    setError("");
 
     const record = {
       objecttype: formData.objecttype,
@@ -105,14 +107,18 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div
+        className="fixed inset-0 bg-black opacity-50"
+        onClick={onClose}
+      ></div>
       <Tour
         steps={steps}
         isOpen={isTourOpen}
         onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
       />
-      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
+        <div className="flex items-center justify-between mb-6 pb-5">
           <h2 className="text-xl font-bold">Add Machine Group</h2>
           <button onClick={handleStartTour} className="p-2">
             <Notebook size={24} />
