@@ -43,7 +43,7 @@ export const sendEncryptedRequest = async (
     // Cek apakah status respons adalah 200
     if (response.status === 200) {
       // Kirim notifikasi ke server lain
-      await axios.post("https://intern-server-production.up.railway.app/notify", {
+      await axios.post("http://3.0.78.128/notify", {
         event: "data_inserted",
       }, {
         headers: {

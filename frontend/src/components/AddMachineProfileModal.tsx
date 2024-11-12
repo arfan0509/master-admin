@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils";
 import {
   fetchMachineTypes,
   fetchMachineGroups,
@@ -10,6 +8,7 @@ import {
 import { countries } from "../utils/countries";
 import Tour from "reactour"; // Import React Tour
 import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { sendInsertRequest } from "../utils/insertUtils";
 
 interface AddMachineProfileModalProps {
   onClose: () => void;
@@ -278,80 +277,42 @@ const AddMachineProfileModal: React.FC<AddMachineProfileModalProps> = ({
     e.preventDefault();
     setIsLoading(true);
 
-    const jsonData = {
-      datacore: "MACHINE",
-      folder: "MACHINEPROFILE",
-      command: "INSERT",
-      group: "XCYTUA",
-      property: "PJLBBS",
-      record: {
-        objecttype: formData.objecttype,
-        objectgroup: formData.objectgroup,
-        objectid: formData.objectid,
-        objectcode: formData.objectcode,
-        objectstatus: formData.objectstatus,
-        objectname: `'${formData.objectname}'`,
-        description: `'${formData.description}'`,
-        registereddate: formatDate(formData.registereddate, "registereddate"),
-        registeredno: `'${formData.registeredno}'`,
-        registeredby: `'${formData.registeredby}'`,
-        countryoforigin: `'${formData.countryoforigin}'`,
-        dob: formatDate(formData.dob, "dob"),
-        sex: `'${formData.sex}'`,
-        documentno: `'${formData.documentno}'`,
-        vendor: `'${formData.vendor}'`,
-        notes: `'${formData.notes}'`,
-        photogalery_1: `'${formData.photogalery_1}'`,
-        photogalery_2: `'${formData.photogalery_2}'`,
-        photogalery_3: `'${formData.photogalery_3}'`,
-        photogalery_4: `'${formData.photogalery_4}'`,
-        photogalery_5: `'${formData.photogalery_5}'`,
-        video: `'${formData.video}'`,
-        active: formData.active,
-      },
+    // Data yang akan di-insert ke dalam MACHINEPROFILE
+    const record = {
+      objecttype: formData.objecttype,
+      objectgroup: formData.objectgroup,
+      objectid: formData.objectid,
+      objectcode: formData.objectcode,
+      objectstatus: formData.objectstatus,
+      objectname: `'${formData.objectname}'`,
+      description: `'${formData.description}'`,
+      registereddate: formatDate(formData.registereddate, "registereddate"),
+      registeredno: `'${formData.registeredno}'`,
+      registeredby: `'${formData.registeredby}'`,
+      countryoforigin: `'${formData.countryoforigin}'`,
+      dob: formatDate(formData.dob, "dob"),
+      sex: `'${formData.sex}'`,
+      documentno: `'${formData.documentno}'`,
+      vendor: `'${formData.vendor}'`,
+      notes: `'${formData.notes}'`,
+      photogalery_1: `'${formData.photogalery_1}'`,
+      photogalery_2: `'${formData.photogalery_2}'`,
+      photogalery_3: `'${formData.photogalery_3}'`,
+      photogalery_4: `'${formData.photogalery_4}'`,
+      photogalery_5: `'${formData.photogalery_5}'`,
+      video: `'${formData.video}'`,
+      active: formData.active,
     };
-
-    const jsonString = JSON.stringify(jsonData, null, 2);
-
-    const encryptedMessage = encryptMessage(jsonString);
-
-    const payload = {
-      apikey: import.meta.env.VITE_API_KEY,
-      uniqueid: import.meta.env.VITE_UNIQUE_ID,
-      timestamp: new Date().toISOString(),
-      localdb: "N",
-      message: encryptedMessage,
-    };
-
-    // Log JSON and encrypted payload
-    // console.log("Original JSON Data:", jsonString);
-    // console.log("Encrypted Payload:", JSON.stringify(payload, null, 2));
 
     try {
-      const response = await axios.post("/api", payload, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      // Panggil fungsi insert
+      await sendInsertRequest("MACHINEPROFILE", record);
 
+      // Jika berhasil, jalankan onAdd dan onClose
       onAdd();
       onClose();
-
-      if (response.status == 200) {
-        await axios.post(
-          "https://intern-server-production.up.railway.app/notify",
-          {
-            event: "data_inserted",
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
     } catch (error) {
-      console.error("Error adding machine group:", error);
+      console.error("Error creating machine profile:", error);
     } finally {
       setIsLoading(false); // Reset loading state setelah proses selesai
     }

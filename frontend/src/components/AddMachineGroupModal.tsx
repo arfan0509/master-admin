@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils";
 import { fetchMachineTypes } from "../utils/dropdownUtils";
 import Tour from "reactour"; // Import React Tour
 import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { sendInsertRequest } from "../utils/insertUtils";
 
 interface AddMachineGroupModalProps {
   onClose: () => void;
@@ -78,61 +77,26 @@ const AddMachineGroupModal: React.FC<AddMachineGroupModalProps> = ({
     }));
   };
 
+  // Fungsi untuk menangani submit pada modal add MACHINEGROUP
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
     setError("");
 
-    const message = JSON.stringify(
-      {
-        datacore: "MACHINE",
-        folder: "MACHINEGROUP",
-        command: "INSERT",
-        group: "XCYTUA",
-        property: "PJLBBS",
-        record: {
-          objecttype: formData.objecttype,
-          objectgroup: formData.objectgroup,
-          description: `'${formData.description}'`,
-          active: formData.active,
-        },
-      },
-      null,
-      2
-    );
-
-    const encryptedMessage = encryptMessage(message);
-    const payload = {
-      apikey: import.meta.env.VITE_API_KEY,
-      uniqueid: import.meta.env.VITE_UNIQUE_ID,
-      timestamp: new Date().toISOString(),
-      localdb: "N",
-      message: encryptedMessage,
+    const record = {
+      objecttype: formData.objecttype,
+      objectgroup: formData.objectgroup,
+      description: `'${formData.description}'`,
+      active: formData.active,
     };
 
     try {
-      const response = await axios.post("/api", payload, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      // Gunakan fungsi insert yang telah dibuat sebelumnya
+      await sendInsertRequest("MACHINEGROUP", record);
 
+      // Panggil fungsi onAdd dan onClose setelah insert berhasil
       onAdd();
       onClose();
-
-      if (response.status == 200) {
-        await axios.post(
-          "https://intern-server-production.up.railway.app/notify",
-          {
-            event: "data_inserted",
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
     } catch (error) {
       console.error("Error adding machine group:", error);
     } finally {

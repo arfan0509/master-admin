@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils";
 import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
 import MapLocationModal from "./MapLocationModal"; // Import MapLocationModal
 import { MapPin, Spinner } from "@phosphor-icons/react";
 import { countries } from "../utils/countries";
 import Tour from "reactour"; // Import React Tour
 import { Notebook } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { sendInsertRequest } from "../utils/insertUtils";
 
 interface MachineType {
   id: number;
@@ -165,62 +164,29 @@ const AddMachineIdModal: React.FC<AddMachineIdModalProps> = ({
     e.preventDefault();
     setIsLoading(true);
 
-    const message = JSON.stringify({
-      datacore: "MACHINE",
-      folder: "MACHINEID",
-      command: "INSERT",
-      group: "XCYTUA",
-      property: "PJLBBS",
-      record: {
-        objecttype: formData.objecttype,
-        objectgroup: formData.objectgroup,
-        objectid: formData.objectid,
-        objectname: `'${formData.objectname}'`,
-        icongroup: formData.icongroup,
-        iconid: formData.iconid,
-        countryid: formData.countryid,
-        stateid: formData.stateid,
-        cityid: formData.cityid,
-        regionid: formData.regionid,
-        lat: formData.lat,
-        long: formData.long,
-        active: formData.active,
-      },
-    });
-
-    const encryptedMessage = encryptMessage(message);
-
-    const payload = {
-      apikey: import.meta.env.VITE_API_KEY,
-      uniqueid: import.meta.env.VITE_UNIQUE_ID,
-      timestamp: new Date().toISOString(),
-      localdb: "N",
-      message: encryptedMessage,
+    const record = {
+      objecttype: formData.objecttype,
+      objectgroup: formData.objectgroup,
+      objectid: formData.objectid,
+      objectname: `'${formData.objectname}'`,
+      icongroup: formData.icongroup,
+      iconid: formData.iconid,
+      countryid: formData.countryid,
+      stateid: formData.stateid,
+      cityid: formData.cityid,
+      regionid: formData.regionid,
+      lat: formData.lat,
+      long: formData.long,
+      active: formData.active,
     };
 
     try {
-      const response = await axios.post("/api", payload, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      // Gunakan fungsi insert yang telah dibuat
+      await sendInsertRequest("MACHINEID", record);
 
+      // Panggil fungsi onAdd dan onClose setelah insert berhasil
       onAdd();
       onClose();
-
-      if (response.status == 200) {
-        await axios.post(
-          "https://intern-server-production.up.railway.app/notify",
-          {
-            event: "data_inserted",
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
     } catch (error) {
       console.error("Error adding machine ID:", error);
     } finally {

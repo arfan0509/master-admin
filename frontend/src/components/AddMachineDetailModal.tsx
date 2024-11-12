@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { encryptMessage } from "../utils/encryptionUtils";
 import {
   fetchMachineTypes,
   fetchMachineGroups,
@@ -8,6 +6,7 @@ import {
 } from "../utils/dropdownUtils";
 import Tour from "reactour"; // Import React Tour
 import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
+import { sendInsertRequest } from "../utils/insertUtils";
 
 interface AddMachineDetailModalProps {
   onClose: () => void;
@@ -169,59 +168,25 @@ const AddMachineDetailModal: React.FC<AddMachineDetailModalProps> = ({
     e.preventDefault();
     setIsLoading(true);
 
-    // Format the data to be sent
-    const jsonData = {
-      datacore: "MACHINE",
-      folder: "MACHINEDETAIL",
-      command: "INSERT",
-      group: "XCYTUA",
-      property: "PJLBBS",
-      record: {
-        objecttype: formData.objecttype,
-        objectgroup: formData.objectgroup,
-        objectid: formData.objectid,
-        objectcode: formData.objectcode,
-        objectname: `'${formData.objectname}'`,
-        lat: formData.lat,
-        long: formData.long,
-        active: formData.active,
-      },
-    };
-
-    // Convert JSON data to pretty-printed string
-    const jsonString = JSON.stringify(jsonData, null, 2);
-
-    // Encrypt JSON data
-    const encryptedMessage = encryptMessage(jsonString);
-
-    // Prepare payload
-    const payload = {
-      apikey: import.meta.env.VITE_API_KEY,
-      uniqueid: import.meta.env.VITE_UNIQUE_ID,
-      timestamp: new Date().toISOString(),
-      localdb: "N",
-      message: encryptedMessage,
+    // Data yang akan di-insert ke dalam MACHINEDETAIL
+    const record = {
+      objecttype: formData.objecttype,
+      objectgroup: formData.objectgroup,
+      objectid: formData.objectid,
+      objectcode: formData.objectcode,
+      objectname: `'${formData.objectname}'`,
+      lat: formData.lat,
+      long: formData.long,
+      active: formData.active,
     };
 
     try {
-      // Send POST request with encrypted payload
-      const response = await axios.post("/api", payload);
+      // Panggil fungsi insert yang telah dibuat
+      await sendInsertRequest("MACHINEDETAIL", record);
 
+      // Panggil onAdd dan onClose jika insert berhasil
       onAdd();
       onClose();
-      if (response.status == 200) {
-        await axios.post(
-          "https://intern-server-production.up.railway.app/notify",
-          {
-            event: "data_inserted",
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
     } catch (error) {
       console.error("Error creating machine detail:", error);
     } finally {
