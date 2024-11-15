@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -24,11 +23,15 @@ L.Icon.Default.mergeOptions({
 interface MapLocationModalProps {
   onClose: () => void;
   onLocationSelect: (lat: number, long: number, locationDetails: any) => void;
+  initialLat?: number; // Lat from modal edit (optional)
+  initialLon?: number; // Lon from modal edit (optional)
 }
 
 const MapLocationModal: React.FC<MapLocationModalProps> = ({
   onClose,
   onLocationSelect,
+  initialLat = -5.0, // Default fallback if no initial coordinates are passed
+  initialLon = 105.0, // Default fallback if no initial coordinates are passed
 }) => {
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
     null
@@ -42,24 +45,35 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
     details?: any;
   } | null>(null);
 
-  const handleMapClick = async (lat: number, long: number) => {
-    setMarkerPosition([lat, long]);
-    try {
-      const response = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse`,
-        {
-          params: {
-            lat,
-            lon: long,
-            format: "json",
-          },
-        }
-      );
-      setSelectedLocation({ lat, lon: long, details: response.data });
-    } catch (error) {
-      console.error("Error during reverse geocoding:", error);
-      setErrorMessage("Error fetching location details.");
+  // Set the initial marker position if available
+  useEffect(() => {
+    if (initialLat && initialLon) {
+      setMarkerPosition([initialLat, initialLon]);
+      setSelectedLocation({ lat: initialLat, lon: initialLon, details: null });
     }
+  }, [initialLat, initialLon]);
+
+  const handleMapClick = (lat: number, long: number) => {
+    setMarkerPosition([lat, long]);
+    setSelectedLocation({ lat, lon: long, details: null });
+
+    axios
+      .get(`https://nominatim.openstreetmap.org/reverse`, {
+        params: {
+          lat,
+          lon: long,
+          format: "json",
+        },
+      })
+      .then((response) => {
+        setSelectedLocation((prevLocation) => ({
+          ...prevLocation,
+          details: response.data,
+        }));
+      })
+      .catch((error) => {
+        console.error("Error during reverse geocoding:", error);
+      });
   };
 
   const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,10 +86,18 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
         const response = await axios.get(
           "https://nominatim.openstreetmap.org/search",
           {
-            params: { q: query, format: "json" },
+            params: {
+              q: query,
+              format: "json",
+            },
           }
         );
-        setSearchResults(response.data.length > 0 ? response.data : []);
+
+        if (response.data.length === 0) {
+          setSearchResults([]);
+        } else {
+          setSearchResults(response.data);
+        }
       } catch (error) {
         console.error("Error searching location:", error);
         setErrorMessage("Error searching location. Please try again.");
@@ -87,7 +109,12 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
 
   const LocationMarker = () => {
     const map = useMap();
-    if (markerPosition) map.flyTo(markerPosition, 17);
+
+    // Fly to marker position if it exists
+    if (markerPosition) {
+      map.flyTo(markerPosition, 17); // Zoom level 17
+    }
+
     return markerPosition ? (
       <Marker position={markerPosition}>
         <Popup>You are here</Popup>
@@ -97,8 +124,9 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
 
   const handleLocationSelect = (lat: number, lon: number) => {
     setMarkerPosition([lat, lon]);
-    setSearchResults([]);
-    handleMapClick(lat, lon);
+    setSelectedLocation({ lat, lon, details: null });
+    setSearchResults([]); // Clear search results after selection
+    handleMapClick(lat, lon); // Fetch details for the new location
   };
 
   const handleSubmit = () => {
@@ -108,7 +136,7 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
         selectedLocation.lon,
         selectedLocation.details || {}
       );
-      onClose();
+      onClose(); // Close modal on submit
     }
   };
 
@@ -154,12 +182,12 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
         )}
 
         <MapContainer
-          center={markerPosition || [-5.0, 105.0]}
-          zoom={markerPosition ? 13 : 5}
-          maxZoom={18}
-          minZoom={5}
+          center={markerPosition || [-5.0, 105.0]} // Koordinat untuk Indonesia
+          zoom={markerPosition ? 13 : 5} // Level zoom awal
+          maxZoom={18} // Level zoom maksimum
+          minZoom={5} // Level zoom minimum
           style={{ height: "300px", width: "100%" }}
-          attributionControl={false}
+          attributionControl={false} // Menyembunyikan watermark
         >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <LocationMarker />
@@ -200,13 +228,14 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
   );
 };
 
-// Komponen untuk menghandle event klik pada map
-const MapContainerEvents = ({ onClick }: { onClick: (e: any) => void }) => {
+// Create a component to handle map events
+const MapContainerEvents = ({ onClick }) => {
   useMapEvents({
-    click(e) {
+    click(e: any) {
       onClick(e);
     },
   });
+
   return null;
 };
 

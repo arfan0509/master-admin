@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useEffect } from "react";
 import { fetchMachineTypes, fetchMachineGroups } from "../utils/dropdownUtils";
-import MapLocationModal from "./MapLocationModal"; // Import MapLocationModal
+import MapLocationModal from "./MapLocationModalEdit";
 import { MapPin, Spinner } from "@phosphor-icons/react";
 import { countries } from "../utils/countries"; // Import data negara
 import Tour from "reactour"; // Import React Tour
@@ -38,7 +38,7 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
   onClose,
   onUpdate,
 }) => {
-  if (!isOpen) return null; 
+  if (!isOpen) return null;
   const [formData, setFormData] = useState({
     id: machineId.id,
     objecttype: machineId.objecttype,
@@ -501,6 +501,8 @@ const EditMachineIdModal: React.FC<EditMachineIdModalProps> = ({
         <MapLocationModal
           onLocationSelect={handleLocationSelect}
           onClose={() => setShowMapModal(false)}
+          initialLat={Number(formData.lat)} // Convert to number
+          initialLon={Number(formData.long)} // Convert to number
         />
       )}
     </div>
