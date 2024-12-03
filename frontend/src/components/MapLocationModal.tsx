@@ -13,7 +13,6 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
 // Setup default icon for marker in Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
     "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
@@ -154,7 +153,7 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
         )}
 
         <MapContainer
-          center={markerPosition || [-5.0, 105.0]}
+          center={markerPosition || ([5.0, 105.0] as [number, number])}
           zoom={markerPosition ? 13 : 5}
           maxZoom={18}
           minZoom={5}

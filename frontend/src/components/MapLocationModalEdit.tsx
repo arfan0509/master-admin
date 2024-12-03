@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import {
   MapContainer,
@@ -12,7 +13,6 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
 // Setup default icon for marker in Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
     "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
@@ -67,7 +67,8 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
       })
       .then((response) => {
         setSelectedLocation((prevLocation) => ({
-          ...prevLocation,
+          lat: prevLocation?.lat ?? 0,  // Ensure lat is always set
+          lon: prevLocation?.lon ?? 0,  // Ensure lon is always set
           details: response.data,
         }));
       })
@@ -229,7 +230,11 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
 };
 
 // Create a component to handle map events
-const MapContainerEvents = ({ onClick }) => {
+interface MapContainerEventsProps {
+  onClick: (e: { latlng: { lat: number; lng: number } }) => void;
+}
+
+const MapContainerEvents: React.FC<MapContainerEventsProps> = ({ onClick }) => {
   useMapEvents({
     click(e: any) {
       onClick(e);

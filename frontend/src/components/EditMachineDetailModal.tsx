@@ -8,6 +8,8 @@ import {
 import Tour from "reactour"; // Import React Tour
 import { Notebook, Spinner } from "@phosphor-icons/react"; // Import ikon Notebook dari Phosphor
 import { sendEncryptedRequest } from "../utils/apiUtils";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 interface MachineDetail {
   id: number;
@@ -34,7 +36,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
   onClose,
   onUpdate,
 }) => {
-  if (!isOpen) return null;
+  const [isClosing, setIsClosing] = useState(false);
   const [formData, setFormData] = useState({
     id: machineDetail.id,
     objecttype: machineDetail.objecttype,
@@ -115,6 +117,14 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
 
   const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    AOS.init({
+      duration: 800, // Durasi animasi (ms)
+      offset: 100, // Jarak dari viewport sebelum animasi dimulai
+      once: true, // Animasi hanya dipicu sekali
+    });
+  }, []);
 
   const steps = [
     {
@@ -229,7 +239,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
       );
 
       onUpdate();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error("Error updating machine detail or related tables:", error);
     } finally {
@@ -237,18 +247,34 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
     }
   };
 
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 800); // Harus sesuai dengan durasi AOS
+  };
+
+  if (!isOpen && !isClosing) return null; // Menyembunyikan modal jika isOpen dan isClosing false
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
       <div
         className="fixed inset-0 bg-black opacity-50"
-        onClick={onClose}
+        onClick={handleClose}
       ></div>
       <Tour
         steps={steps}
         isOpen={isTourOpen}
         onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
       />
-      <div className="bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto">
+      <div
+        className={`bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto ${
+          isClosing ? "aos-anchor" : ""
+        }`}
+        data-aos={isClosing ? "fade-up" : "fade-up"}
+        data-aos-duration="800"
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Edit Machine Detail</h2>
           <button onClick={handleStartTour} className="p-2">
@@ -388,7 +414,7 @@ const EditMachineDetailModal: React.FC<EditMachineDetailModalProps> = ({
           <div className="col-span-2 flex justify-end">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Cancel
