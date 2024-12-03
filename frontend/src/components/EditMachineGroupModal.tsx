@@ -3,6 +3,8 @@ import { fetchMachineTypes } from "../utils/dropdownUtils";
 import Tour from "reactour"; // Import React Tour
 import { Notebook, Spinner } from "@phosphor-icons/react";
 import { sendEncryptedRequest } from "../utils/apiUtils";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 interface MachineGroup {
   id: number;
@@ -31,12 +33,10 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
     active: machineGroup.active,
   });
 
-  const [objectTypes, setObjectTypes] = useState<
-    { id: number; objecttype: string }[]
-  >([]);
-
-  const [originalJson, setOriginalJson] = useState<string | null>(null);
-  const [encryptedMessage, setEncryptedMessage] = useState<string | null>(null);
+  const [objectTypes, setObjectTypes] = useState<{ id: number; objecttype: string }[]>([]);
+  const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
+  const [isLoading, setIsLoading] = useState(false);
+  const [isClosing, setIsClosing] = useState(false); // State for handling modal close animation
 
   useEffect(() => {
     const fetchObjectTypes = async () => {
@@ -49,10 +49,14 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
     };
 
     fetchObjectTypes();
-  }, []);
 
-  const [isTourOpen, setIsTourOpen] = useState(false); // State untuk mengontrol tur
-  const [isLoading, setIsLoading] = useState(false);
+    // Initialize AOS for animations
+    AOS.init({
+      duration: 800, // Durasi animasi (ms)
+      offset: 100, // Jarak dari viewport sebelum animasi dimulai
+      once: true, // Animasi hanya dipicu sekali
+    });
+  }, []);
 
   const steps = [
     {
@@ -72,7 +76,7 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
     },
     {
       selector: ".active-radio",
-      content: "Pilih apakah Machine Group ini aktif/nonaktf.",
+      content: "Pilih apakah Machine Group ini aktif/nonaktif.",
     },
     {
       selector: ".submit-button",
@@ -84,9 +88,7 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
     setIsTourOpen(true); // Mulai tur saat tombol diklik
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -137,7 +139,7 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
       );
 
       onUpdate();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error("Error updating machine group or related tables:", error);
     } finally {
@@ -145,16 +147,33 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
     }
   };
 
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 800); // Must match the AOS duration for a smooth close animation
+  };
+
+  if (!machineGroup) return null;
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black opacity-50" onClick={handleClose}></div>
       <Tour
         steps={steps}
         isOpen={isTourOpen}
         onRequestClose={() => setIsTourOpen(false)} // Tutup tur saat selesai
       />
-      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold mb-4">Edit Machine Group</h2>
+      <div
+        className={`bg-white w-full max-w-3xl mx-auto p-4 rounded-lg shadow-lg relative z-10 max-h-screen overflow-y-auto ${
+          isClosing ? "aos-anchor" : ""
+        }`}
+        data-aos={isClosing ? "fade-up" : "fade-up"}
+        data-aos-duration="800"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">Edit Machine Group</h2>
           <button onClick={handleStartTour} className="p-2">
             <Notebook size={24} />
           </button>
@@ -235,7 +254,7 @@ const EditMachineGroupModal: React.FC<EditMachineGroupModalProps> = ({
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="mr-2 px-4 py-2 bg-gray-300 rounded-lg hover:bg-opacity-90 transform hover:scale-105 transition-transform duration-200"
             >
               Cancel

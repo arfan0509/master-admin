@@ -411,13 +411,15 @@ const MachineProfileData: React.FC = () => {
       {modalOpen && selectedMachineProfile && (
         <EditMachineProfileModal
           machineProfile={selectedMachineProfile}
+          isOpen={modalOpen} // Menambahkan isOpen di sini
           onClose={() => setModalOpen(false)}
           onUpdate={handleUpdate}
         />
       )}
+
       {addModalOpen && (
         <AddMachineProfileModal
-          isOpen={addModalOpen}
+          isOpen={addModalOpen} // Menambahkan isOpen di sini
           onClose={() => setAddModalOpen(false)}
           onAdd={handleAdd}
         />
