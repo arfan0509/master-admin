@@ -13,11 +13,13 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
 // Setup default icon for marker in Leaflet
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+const defaultIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+  iconSize: [25, 41], // Default icon size
+  iconAnchor: [12, 41], // Anchor the icon to the bottom center
+  popupAnchor: [0, -41], // Position of the popup relative to the icon
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+  shadowSize: [41, 41], // Shadow size
 });
 
 interface MapLocationModalProps {
@@ -117,7 +119,7 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
     }
 
     return markerPosition ? (
-      <Marker position={markerPosition}>
+      <Marker position={markerPosition} icon={defaultIcon}>
         <Popup>You are here</Popup>
       </Marker>
     ) : null;

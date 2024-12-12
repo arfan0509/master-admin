@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import {
   MapContainer,
@@ -13,11 +12,13 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
 // Setup default icon for marker in Leaflet
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+const defaultIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+  iconSize: [25, 41], // Size of the marker icon
+  iconAnchor: [12, 41], // Anchor point of the icon (where the "tip" is located)
+  popupAnchor: [0, -41], // Popup positioning relative to the icon
 });
 
 interface MapLocationModalProps {
@@ -88,7 +89,7 @@ const MapLocationModal: React.FC<MapLocationModalProps> = ({
     const map = useMap();
     if (markerPosition) map.flyTo(markerPosition, 17);
     return markerPosition ? (
-      <Marker position={markerPosition}>
+      <Marker position={markerPosition} icon={defaultIcon}>
         <Popup>You are here</Popup>
       </Marker>
     ) : null;
