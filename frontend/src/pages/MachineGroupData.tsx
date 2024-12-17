@@ -26,7 +26,7 @@ const MachineGroupData: React.FC = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchMachineGroups();
@@ -134,8 +134,8 @@ const MachineGroupData: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300">
-      <header className="p-6 bg-[#385878] text-white">
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300">
+      <header className="p-6 bg-[#385878] text-white flex justify-between items-center">
         <h1 className="text-3xl font-semibold flex items-center gap-2">
           Machine Group Data
           <Question
@@ -191,9 +191,11 @@ const MachineGroupData: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="flex-1">
+
+        {/* Table Container with Scroll */}
+        <div className="flex-1 overflow-y-auto">
           <table className="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-            <thead className="bg-gray-100 text-gray-800 border-b">
+            <thead className="bg-gray-100 text-gray-800 sticky top-[-0.5px] z-10">
               <tr>
                 <th className="py-4 px-6 text-left">No</th>
                 <th className="py-4 px-6 text-left">Object Type</th>

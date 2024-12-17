@@ -36,7 +36,7 @@ const MachineIdData: React.FC = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchMachineIds();
@@ -146,8 +146,8 @@ const MachineIdData: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300 max-w-full w-full">
-      <header className="p-6 bg-[#385878] text-white">
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300">
+      <header className="p-6 bg-[#385878] text-white flex justify-between items-center">
         <h1 className="text-3xl font-semibold flex items-center gap-2">
           Machine ID Data
           <Question
@@ -203,25 +203,57 @@ const MachineIdData: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-x-auto max-w">
+
+        {/* Table Container with Scroll */}
+        <div className="flex-1 overflow-y-auto">
           <table className="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-            <thead className="bg-gray-100 text-gray-800 border-b">
+            <thead className="bg-gray-100 text-gray-800 sticky top-[-0.5px] z-10">
               <tr>
-                <th className="py-4 px-6 text-left">No</th>
-                <th className="py-4 px-6 text-left">Object Type</th>
-                <th className="py-4 px-6 text-left">Object Group</th>
-                <th className="py-4 px-6 text-left">Object ID</th>
-                <th className="py-4 px-6 text-left">Object Name</th>
-                <th className="py-4 px-6 text-left">Icon Group</th>
-                <th className="py-4 px-6 text-left">Icon ID</th>
-                <th className="py-4 px-6 text-left">Country ID</th>
-                <th className="py-4 px-6 text-left">State ID</th>
-                <th className="py-4 px-6 text-left">City ID</th>
-                <th className="py-4 px-6 text-left">Region ID</th>
-                <th className="py-4 px-6 text-left">Latitude</th>
-                <th className="py-4 px-6 text-left">Longitude</th>
-                <th className="py-4 px-6 text-left">Active</th>
-                <th className="py-4 px-6 text-left">Actions</th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-16">
+                  No
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Object Type
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Object Group
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Object ID
+                </th>
+                <th className="py-4 px-6 pr-28 text-left whitespace-nowrap w-40">
+                  Object Name
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-40">
+                  Icon Group
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Icon ID
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Country ID
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  State ID
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  City ID
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Region ID
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Latitude
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Longitude
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-24">
+                  Active
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-24">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -234,7 +266,7 @@ const MachineIdData: React.FC = () => {
                   <td className="py-4 px-6 border-b">
                     {machineId.objectgroup}
                   </td>
-                  <td className="py-4 px-6 border-b text-center w-24">
+                  <td className="py-4 px-6 border-b whitespace-nowrap">
                     {machineId.objectid}
                   </td>
                   <td className="py-4 px-6 border-b">{machineId.objectname}</td>

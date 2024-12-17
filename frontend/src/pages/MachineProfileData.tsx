@@ -45,7 +45,7 @@ const MachineProfileData: React.FC = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchMachineProfiles();
@@ -168,8 +168,8 @@ const MachineProfileData: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300 w-full">
-      <header className="p-6 bg-[#385878] text-white">
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300">
+      <header className="p-6 bg-[#385878] text-white flex justify-between items-center">
         <h1 className="text-3xl font-semibold flex items-center gap-2">
           Machine Profile Data
           <Question
@@ -225,35 +225,87 @@ const MachineProfileData: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-x-auto max-w">
+
+        {/* Table Container with Scroll */}
+        <div className="flex-1 overflow-y-auto">
           <table className="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-            <thead className="bg-gray-100 text-gray-800 border-b">
+            <thead className="bg-gray-100 text-gray-800 sticky top-[-0.5px] z-10">
               <tr>
-                <th className="py-4 px-6 text-left">No</th>
-                <th className="py-4 px-6 text-left">Object Type</th>
-                <th className="py-4 px-6 text-left">Object Group</th>
-                <th className="py-4 px-6 text-left">Object ID</th>
-                <th className="py-4 px-6 text-left">Object Code</th>
-                <th className="py-4 px-6 text-left">Object Status</th>
-                <th className="py-4 px-6 text-left">Object Name</th>
-                <th className="py-4 px-6 text-left">Description</th>
-                <th className="py-4 px-6 text-left">Registered Date</th>
-                <th className="py-4 px-6 text-left">Registered No</th>
-                <th className="py-4 px-6 text-left">Registered By</th>
-                <th className="py-4 px-6 text-left">Country of Origin</th>
-                <th className="py-4 px-6 text-left">DOB</th>
-                <th className="py-4 px-6 text-left">Sex</th>
-                <th className="py-4 px-6 text-left">Document No</th>
-                <th className="py-4 px-6 text-left">Vendor</th>
-                <th className="py-4 px-6 text-left">Notes</th>
-                <th className="py-4 px-6 text-left">Photo Gallery 1</th>
-                <th className="py-4 px-6 text-left">Photo Gallery 2</th>
-                <th className="py-4 px-6 text-left">Photo Gallery 3</th>
-                <th className="py-4 px-6 text-left">Photo Gallery 4</th>
-                <th className="py-4 px-6 text-left">Photo Gallery 5</th>
-                <th className="py-4 px-6 text-left">Video</th>
-                <th className="py-4 px-6 text-left">Active</th>
-                <th className="py-4 px-6 text-left">Actions</th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-16">
+                  No
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Object Type
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Object Group
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Object ID
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Object Code
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-40">
+                  Object Status
+                </th>
+                <th className="py-4 px-6 pr-16 text-left whitespace-nowrap w-40">
+                  Object Name
+                </th>
+                <th className="py-4 px-6 pr-24 text-left whitespace-nowrap w-48">
+                  Description
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-40">
+                  Registered Date
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-40">
+                  Registered No
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-40">
+                  Registered By
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-48">
+                  Country of Origin
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-32">
+                  Date of Birth
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-24">
+                  Sex
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-40">
+                  Document No
+                </th>
+                <th className="py-4 px-6 pr-28 text-left whitespace-nowrap w-40">
+                  Vendor
+                </th>
+                <th className="py-4 px-6 pr-20 text-left whitespace-nowrap w-48">
+                  Notes
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-48">
+                  Photo Gallery 1
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-48">
+                  Photo Gallery 2
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-48">
+                  Photo Gallery 3
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-48">
+                  Photo Gallery 4
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-48">
+                  Photo Gallery 5
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-40">
+                  Video
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-24">
+                  Active
+                </th>
+                <th className="py-4 px-6 text-left whitespace-nowrap w-24">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -268,13 +320,13 @@ const MachineProfileData: React.FC = () => {
                   <td className="py-4 px-6 border-b">
                     {machineProfile.objectgroup}
                   </td>
-                  <td className="py-4 px-6 border-b text-center w-24">
+                  <td className="py-4 px-6 border-b w-24">
                     {machineProfile.objectid}
                   </td>
                   <td className="py-4 px-6 border-b">
                     {machineProfile.objectcode}
                   </td>
-                  <td className="py-4 px-6 border-b">
+                  <td className="py-4 px-6 border-b text-center">
                     {machineProfile.objectstatus}
                   </td>
                   <td className="py-4 px-6 border-b">
@@ -295,8 +347,8 @@ const MachineProfileData: React.FC = () => {
                   <td className="py-4 px-6 border-b">
                     {machineProfile.countryoforigin}
                   </td>
-                  <td className="py-4 px-6 border-b">{machineProfile.dob}</td>
-                  <td className="py-4 px-6 border-b">{machineProfile.sex}</td>
+                  <td className="py-4 px-6 border-b whitespace-nowrap">{machineProfile.dob}</td>
+                  <td className="py-4 px-6 border-b text-center">{machineProfile.sex}</td>
                   <td className="py-4 px-6 border-b">
                     {machineProfile.documentno}
                   </td>

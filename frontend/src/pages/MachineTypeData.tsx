@@ -25,7 +25,7 @@ const MachineTypeData: React.FC = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchMachinetypes();
@@ -130,18 +130,19 @@ const MachineTypeData: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300">
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50 rounded border border-gray-300">
       <header className="p-6 bg-[#385878] text-white flex justify-between items-center">
         <h1 className="text-3xl font-semibold flex items-center gap-2">
           Machine Type Data
           <Question
             size={32}
             weight="regular"
-            className="cursor-pointer duration-200 hover:scale-105" // Tambahkan kelas di sini
+            className="cursor-pointer duration-200 hover:scale-105"
             onClick={() => setGuideModalOpen(true)}
           />
         </h1>
       </header>
+
       <main className="flex flex-col flex-1 overflow-hidden p-6">
         <div className="flex justify-between items-center mb-6">
           <button
@@ -151,7 +152,6 @@ const MachineTypeData: React.FC = () => {
             Add Data
           </button>
           <div className="flex items-center gap-4">
-            {/* Dropdown untuk filter Terbaru dan Terlama */}
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
@@ -160,7 +160,7 @@ const MachineTypeData: React.FC = () => {
               <option value="newest">Latest</option>
               <option value="oldest">Oldest</option>
             </select>
-            {/* Dropdown untuk filter Active dan Inactive */}
+
             <select
               value={activeFilter}
               onChange={(e) => setActiveFilter(e.target.value)}
@@ -187,9 +187,11 @@ const MachineTypeData: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="flex-1">
+
+        {/* Table Container with Scroll */}
+        <div className="flex-1 overflow-y-auto">
           <table className="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-            <thead className="bg-gray-100 text-gray-800 border-b">
+            <thead className="bg-gray-100 text-gray-800 sticky top-[-0.5px] z-10">
               <tr>
                 <th className="py-4 px-6 text-left">No</th>
                 <th className="py-4 px-6 text-left">Object Type</th>
@@ -241,7 +243,6 @@ const MachineTypeData: React.FC = () => {
             &lt;
           </button>
 
-          {/* Logic for Pagination with Ellipsis */}
           {Array.from({ length: totalPages }, (_, index) => {
             const pageNumber = index + 1;
             const isPageNearCurrent =
@@ -249,7 +250,6 @@ const MachineTypeData: React.FC = () => {
               pageNumber === totalPages ||
               Math.abs(currentPage - pageNumber) <= 1;
 
-            // Display button if page is near the current page or first/last page
             if (isPageNearCurrent) {
               return (
                 <button
@@ -266,7 +266,6 @@ const MachineTypeData: React.FC = () => {
               );
             }
 
-            // Display ellipsis button if there’s a gap between the displayed pages
             const showLeftEllipsis = pageNumber === 2 && currentPage > 3;
             const showRightEllipsis =
               pageNumber === totalPages - 1 && currentPage < totalPages - 2;
@@ -299,6 +298,7 @@ const MachineTypeData: React.FC = () => {
         </div>
       </main>
 
+      {/* Modals */}
       {modalOpen && selectedMachinetype && (
         <EditMachinetypeModal
           isOpen={modalOpen}
